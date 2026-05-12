@@ -26,26 +26,14 @@ export async function GET(request: NextRequest) {
     let nuevos = 0
     let actualizados = 0
 
-    // Procesar cada pago
+    // Procesar cada pago y guardarlo como movimiento pendiente
     for (const payment of payments) {
       if (!payment.id) continue
 
-      // FILTRO: Detectar si es una COMPRA (no un ingreso)
-      // Las compras típicamente tienen estas características:
-      const descripcion = (payment.description || '').toUpperCase()
-      const esCompraML = descripcion.includes('MERCADOLIBRE') || 
-                         descripcion.includes('MERPAGO+')
-      
-      // Si detectamos que es una compra, la saltamos
-      if (esCompraML) {
-        console.log(`Saltando compra: ${payment.id} - ${payment.description}`)
-        continue
-      }
-
-      const ingresoData = {
+      const movimientoData = {
         mercadopago_id: payment.id.toString(),
         monto: payment.transaction_amount || 0,
-        descripcion: payment.description || payment.statement_descriptor || 'Pago recibido',
+        descripcion: payment.description || payment.statement_descriptor || 'Pago de MercadoPago',
         fecha: payment.date_created || new Date().toISOString(),
         estado: payment.status || 'pending',
         comprador_email: payment.payer?.email || null,
@@ -54,30 +42,31 @@ export async function GET(request: NextRequest) {
           payment_type: payment.payment_type_id,
           currency: payment.currency_id,
           ...payment.metadata
-        }
+        },
+        clasificado: false
       }
 
-      // Verificar si ya existe
+      // Verificar si ya existe en movimientos pendientes
       const { data: existente } = await supabase
-        .from('ingresos')
-        .select('id, estado')
-        .eq('mercadopago_id', ingresoData.mercadopago_id)
+        .from('movimientos_pendientes')
+        .select('id, estado, clasificado')
+        .eq('mercadopago_id', movimientoData.mercadopago_id)
         .single()
 
       if (existente) {
-        // Actualizar si el estado cambió
-        if (existente.estado !== ingresoData.estado) {
+        // Actualizar si cambió el estado y no ha sido clasificado
+        if (!existente.clasificado && existente.estado !== movimientoData.estado) {
           await supabase
-            .from('ingresos')
-            .update({ estado: ingresoData.estado })
+            .from('movimientos_pendientes')
+            .update({ estado: movimientoData.estado })
             .eq('id', existente.id)
           actualizados++
         }
       } else {
-        // Insertar nuevo
+        // Insertar nuevo movimiento pendiente
         const { error } = await supabase
-          .from('ingresos')
-          .insert(ingresoData)
+          .from('movimientos_pendientes')
+          .insert(movimientoData)
         
         if (!error) nuevos++
       }
@@ -87,7 +76,8 @@ export async function GET(request: NextRequest) {
       success: true,
       total: payments.length,
       nuevos,
-      actualizados
+      actualizados,
+      mensaje: 'Movimientos sincronizados. Por favor revísalos y clasifícalos.'
     })
 
   } catch (error: any) {

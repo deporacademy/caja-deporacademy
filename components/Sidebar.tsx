@@ -8,7 +8,8 @@ import {
   TrendingDown, 
   Settings,
   LogOut,
-  Wallet
+  Wallet,
+  CheckSquare
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
@@ -16,6 +17,7 @@ const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Ingresos', href: '/dashboard/ingresos', icon: TrendingUp },
   { name: 'Gastos', href: '/dashboard/gastos', icon: TrendingDown },
+  { name: 'Revisar Movimientos', href: '/dashboard/revisar-movimientos', icon: CheckSquare },
   { name: 'Configuración', href: '/dashboard/settings', icon: Settings },
 ]
 

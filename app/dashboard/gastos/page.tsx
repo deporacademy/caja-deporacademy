@@ -13,6 +13,7 @@ export default function GastosPage() {
   const [editingGasto, setEditingGasto] = useState<any>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterCategoria, setFilterCategoria] = useState<string>('all')
+  const [comprobante, setComprobante] = useState<string | null>(null)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -55,29 +56,26 @@ export default function GastosPage() {
     e.preventDefault()
 
     try {
+      const gastoData = {
+        monto: parseFloat(formData.monto),
+        descripcion: formData.descripcion,
+        fecha: formData.fecha,
+        categoria_id: formData.categoria_id || null,
+        notas: formData.notas || null,
+        comprobante_base64: comprobante
+      }
+
       if (editingGasto) {
         const { error } = await supabase
           .from('gastos')
-          .update({
-            monto: parseFloat(formData.monto),
-            descripcion: formData.descripcion,
-            fecha: formData.fecha,
-            categoria_id: formData.categoria_id || null,
-            notas: formData.notas || null
-          })
+          .update(gastoData)
           .eq('id', editingGasto.id)
 
         if (error) throw error
       } else {
         const { error } = await supabase
           .from('gastos')
-          .insert({
-            monto: parseFloat(formData.monto),
-            descripcion: formData.descripcion,
-            fecha: formData.fecha,
-            categoria_id: formData.categoria_id || null,
-            notas: formData.notas || null
-          })
+          .insert(gastoData)
 
         if (error) throw error
       }
@@ -98,8 +96,20 @@ export default function GastosPage() {
       categoria_id: categorias[0]?.id || '',
       notas: ''
     })
+    setComprobante(null)
     setEditingGasto(null)
     setShowModal(false)
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setComprobante(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
   }
 
   function handleEdit(gasto: any) {
@@ -359,6 +369,23 @@ export default function GastosPage() {
                   rows={3}
                   placeholder="Información adicional..."
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Comprobante (opcional)
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="input-field"
+                />
+                {comprobante && (
+                  <div className="mt-2">
+                    <img src={comprobante} alt="Comprobante" className="max-w-xs rounded border" />
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-3 pt-4">

@@ -1,19 +1,33 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase, type Ingreso } from '@/lib/supabase'
-import { TrendingUp, Search, Download, Trash2 } from 'lucide-react'
+import { supabase, type Ingreso, type CategoriaIngreso } from '@/lib/supabase'
+import { TrendingUp, Search, Download, Trash2, Plus, X } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
 export default function IngresosPage() {
   const [ingresos, setIngresos] = useState<Ingreso[]>([])
+  const [categorias, setCategorias] = useState<CategoriaIngreso[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterEstado, setFilterEstado] = useState<string>('all')
+  const [showModal, setShowModal] = useState(false)
+  const [editingIngreso, setEditingIngreso] = useState<any>(null)
+  const [comprobante, setComprobante] = useState<string | null>(null)
+
+  const [formData, setFormData] = useState({
+    monto: '',
+    descripcion: '',
+    fecha: format(new Date(), 'yyyy-MM-dd'),
+    categoria_id: '',
+    comprador_email: '',
+    estado: 'approved'
+  })
 
   useEffect(() => {
     loadIngresos()
+    loadCategorias()
   }, [])
 
   async function loadIngresos() {
@@ -28,6 +42,82 @@ export default function IngresosPage() {
       console.error('Error loading ingresos:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function loadCategorias() {
+    try {
+      const { data } = await supabase
+        .from('categorias_ingresos')
+        .select('*')
+        .order('nombre')
+
+      setCategorias(data || [])
+      if (data && data.length > 0) {
+        setFormData(prev => ({ ...prev, categoria_id: data[0].id }))
+      }
+    } catch (error) {
+      console.error('Error loading categorias:', error)
+    }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+
+    try {
+      const ingresoData = {
+        ...formData,
+        monto: parseFloat(formData.monto),
+        mercadopago_id: `MANUAL-${Date.now()}`,
+        comprobante_base64: comprobante,
+        metadata: { tipo: 'manual' }
+      }
+
+      if (editingIngreso) {
+        const { error } = await supabase
+          .from('ingresos')
+          .update(ingresoData)
+          .eq('id', editingIngreso.id)
+
+        if (error) throw error
+      } else {
+        const { error } = await supabase
+          .from('ingresos')
+          .insert(ingresoData)
+
+        if (error) throw error
+      }
+
+      resetForm()
+      loadIngresos()
+    } catch (error) {
+      console.error('Error saving ingreso:', error)
+      alert('Error al guardar el ingreso')
+    }
+  }
+
+  function resetForm() {
+    setFormData({
+      monto: '',
+      descripcion: '',
+      fecha: format(new Date(), 'yyyy-MM-dd'),
+      categoria_id: categorias[0]?.id || '',
+      comprador_email: '',
+      estado: 'approved'
+    })
+    setComprobante(null)
+    setEditingIngreso(null)
+    setShowModal(false)
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setComprobante(reader.result as string)
+      }
+      reader.readAsDataURL(file)
     }
   }
 
@@ -100,12 +190,21 @@ export default function IngresosPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
-          <TrendingUp className="w-8 h-8 text-green-600" />
-          Ingresos
-        </h1>
-        <p className="text-slate-600">Pagos recibidos desde MercadoPago</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
+            <TrendingUp className="w-8 h-8 text-green-600" />
+            Ingresos
+          </h1>
+          <p className="text-slate-600">Pagos recibidos desde MercadoPago</p>
+        </div>
+        <button
+          onClick={() => setShowModal(true)}
+          className="btn-primary flex items-center gap-2"
+        >
+          <Plus className="w-5 h-5" />
+          Nuevo Ingreso
+        </button>
       </div>
 
       {/* Stats */}
@@ -250,6 +349,137 @@ export default function IngresosPage() {
           )}
         </div>
       </div>
+
+      {/* Modal para crear/editar ingreso */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="card p-8 max-w-2xl w-full animate-slide-up max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-slate-900">
+                {editingIngreso ? 'Editar Ingreso' : 'Nuevo Ingreso'}
+              </h2>
+              <button
+                onClick={resetForm}
+                className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Monto *
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formData.monto}
+                    onChange={(e) => setFormData({ ...formData, monto: e.target.value })}
+                    className="input-field"
+                    placeholder="1000.00"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Categoría *
+                  </label>
+                  <select
+                    value={formData.categoria_id}
+                    onChange={(e) => setFormData({ ...formData, categoria_id: e.target.value })}
+                    className="input-field"
+                    required
+                  >
+                    {categorias.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Descripción *
+                </label>
+                <input
+                  type="text"
+                  value={formData.descripcion}
+                  onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+                  className="input-field"
+                  placeholder="Venta de libros"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Fecha *
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.fecha}
+                    onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
+                    className="input-field"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Email (opcional)
+                  </label>
+                  <input
+                    type="email"
+                    value={formData.comprador_email}
+                    onChange={(e) => setFormData({ ...formData, comprador_email: e.target.value })}
+                    className="input-field"
+                    placeholder="cliente@example.com"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Comprobante (opcional)
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="input-field"
+                />
+                {comprobante && (
+                  <div className="mt-2">
+                    <img src={comprobante} alt="Comprobante" className="max-w-xs rounded border" />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="flex-1 btn-secondary"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 btn-primary"
+                >
+                  {editingIngreso ? 'Actualizar' : 'Guardar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

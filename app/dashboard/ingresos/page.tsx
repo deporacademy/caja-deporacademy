@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase, type Ingreso } from '@/lib/supabase'
-import { TrendingUp, Search, Download } from 'lucide-react'
+import { TrendingUp, Search, Download, Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -28,6 +28,25 @@ export default function IngresosPage() {
       console.error('Error loading ingresos:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function eliminarIngreso(id: string) {
+    if (!confirm('¿Estás seguro de eliminar este ingreso?')) return
+
+    try {
+      const { error } = await supabase
+        .from('ingresos')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+
+      alert('Ingreso eliminado correctamente')
+      loadIngresos()
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Error al eliminar el ingreso')
     }
   }
 
@@ -163,6 +182,9 @@ export default function IngresosPage() {
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                   Estado
                 </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                  Acciones
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
@@ -204,6 +226,15 @@ export default function IngresosPage() {
                        ingreso.estado === 'pending' ? 'Pendiente' :
                        'Rechazado'}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <button
+                      onClick={() => eliminarIngreso(ingreso.id)}
+                      className="text-red-600 hover:text-red-800 transition-colors"
+                      title="Eliminar ingreso"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
                   </td>
                 </tr>
               ))}

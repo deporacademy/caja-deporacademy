@@ -23,6 +23,16 @@ export async function GET(request: NextRequest) {
       status: 'approved'
     })
 
+    // DEBUG: Ver datos completos de los primeros pagos
+    if (payments.length > 0) {
+      console.log('=== EJEMPLO DE PAYMENT ===')
+      console.log('Payment completo:', JSON.stringify(payments[0], null, 2))
+      console.log('transaction_amount:', payments[0].transaction_amount)
+      console.log('operation_type:', payments[0].operation_type)
+      console.log('transaction_details:', payments[0].transaction_details)
+      console.log('========================')
+    }
+
     let nuevos = 0
     let actualizados = 0
 

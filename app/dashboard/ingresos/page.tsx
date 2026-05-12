@@ -2,14 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { supabase, type Ingreso } from '@/lib/supabase'
-import { TrendingUp, RefreshCw, Search, Download } from 'lucide-react'
+import { TrendingUp, Search, Download } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
 export default function IngresosPage() {
   const [ingresos, setIngresos] = useState<Ingreso[]>([])
   const [loading, setLoading] = useState(true)
-  const [syncing, setSyncing] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterEstado, setFilterEstado] = useState<string>('all')
 
@@ -29,25 +28,6 @@ export default function IngresosPage() {
       console.error('Error loading ingresos:', error)
     } finally {
       setLoading(false)
-    }
-  }
-
-  async function syncMercadoPago() {
-    setSyncing(true)
-    try {
-      const response = await fetch('/api/sync-mercadopago')
-      const result = await response.json()
-      
-      if (response.ok) {
-        alert(`Sincronización completada: ${result.nuevos} nuevos ingresos`)
-        loadIngresos()
-      } else {
-        alert('Error al sincronizar: ' + result.error)
-      }
-    } catch (error) {
-      alert('Error al sincronizar con MercadoPago')
-    } finally {
-      setSyncing(false)
     }
   }
 
@@ -101,22 +81,12 @@ export default function IngresosPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
-            <TrendingUp className="w-8 h-8 text-green-600" />
-            Ingresos
-          </h1>
-          <p className="text-slate-600">Pagos recibidos desde MercadoPago</p>
-        </div>
-        <button
-          onClick={syncMercadoPago}
-          disabled={syncing}
-          className="btn-primary flex items-center gap-2 disabled:opacity-50"
-        >
-          <RefreshCw className={`w-5 h-5 ${syncing ? 'animate-spin' : ''}`} />
-          {syncing ? 'Sincronizando...' : 'Sincronizar MP'}
-        </button>
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
+          <TrendingUp className="w-8 h-8 text-green-600" />
+          Ingresos
+        </h1>
+        <p className="text-slate-600">Pagos recibidos desde MercadoPago</p>
       </div>
 
       {/* Stats */}

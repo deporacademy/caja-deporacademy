@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { ArrowDownCircle, ArrowUpCircle, Clock, CheckCircle } from 'lucide-react'
+import { ArrowDownCircle, ArrowUpCircle, Clock, CheckCircle, RefreshCw } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -21,6 +21,7 @@ export default function RevisarMovimientosPage() {
   const [movimientos, setMovimientos] = useState<MovimientoPendiente[]>([])
   const [loading, setLoading] = useState(true)
   const [clasificando, setClasificando] = useState<string | null>(null)
+  const [syncing, setSyncing] = useState(false)
 
   useEffect(() => {
     cargarMovimientos()
@@ -40,6 +41,25 @@ export default function RevisarMovimientosPage() {
       console.error('Error cargando movimientos:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const sincronizarMercadoPago = async () => {
+    setSyncing(true)
+    try {
+      const response = await fetch('/api/sync-mercadopago')
+      const result = await response.json()
+      
+      if (response.ok) {
+        alert(result.mensaje || `Sincronizados: ${result.nuevos} nuevos movimientos`)
+        cargarMovimientos()
+      } else {
+        alert('Error al sincronizar: ' + result.error)
+      }
+    } catch (error) {
+      alert('Error al sincronizar con MercadoPago')
+    } finally {
+      setSyncing(false)
     }
   }
 
@@ -77,11 +97,21 @@ export default function RevisarMovimientosPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Revisar Movimientos</h1>
-        <p className="text-gray-600 mt-2">
-          Clasifica cada movimiento de MercadoPago como ingreso o gasto
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Revisar Movimientos</h1>
+          <p className="text-gray-600 mt-2">
+            Clasifica cada movimiento de MercadoPago como ingreso o gasto
+          </p>
+        </div>
+        <button
+          onClick={sincronizarMercadoPago}
+          disabled={syncing}
+          className="btn-primary flex items-center gap-2 disabled:opacity-50"
+        >
+          <RefreshCw className={`w-5 h-5 ${syncing ? 'animate-spin' : ''}`} />
+          {syncing ? 'Sincronizando...' : 'Sincronizar MP'}
+        </button>
       </div>
 
       {/* Stats */}

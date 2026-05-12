@@ -4,6 +4,8 @@ import { cookies } from 'next/headers'
 import { getPayments } from '@/lib/mercadopago'
 import { subMonths } from 'date-fns'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = createRouteHandlerClient({ cookies })

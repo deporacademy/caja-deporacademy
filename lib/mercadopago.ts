@@ -19,13 +19,11 @@ export async function getPayments(filters?: {
       criteria: 'desc',
     }
 
+    // Si hay begin_date, DEBE haber end_date
     if (filters?.dateFrom) {
       searchParams.range = `date_created`
       searchParams.begin_date = filters.dateFrom
-    }
-
-    if (filters?.dateTo) {
-      searchParams.end_date = filters.dateTo
+      searchParams.end_date = filters.dateTo || new Date().toISOString()
     }
 
     if (filters?.status) {

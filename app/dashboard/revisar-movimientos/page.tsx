@@ -127,6 +127,14 @@ export default function RevisarMovimientosPage() {
                     <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">
                       {movimiento.estado}
                     </span>
+                    {/* Sugerencia basada en el signo */}
+                    <span className={`px-2 py-1 text-xs font-medium rounded ${
+                      movimiento.monto > 0 
+                        ? 'bg-green-50 text-green-700 border border-green-200'
+                        : 'bg-red-50 text-red-700 border border-red-200'
+                    }`}>
+                      {movimiento.monto > 0 ? '↓ Probable ingreso' : '↑ Probable gasto'}
+                    </span>
                   </div>
 
                   <p className="text-gray-900 font-medium">

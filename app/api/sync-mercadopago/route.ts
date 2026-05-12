@@ -26,14 +26,22 @@ export async function GET(request: NextRequest) {
     let nuevos = 0
     let actualizados = 0
 
-    // Procesar cada pago y guardarlo como movimiento pendiente
+    // Procesar cada pago y clasificarlo automáticamente por el signo del monto
     for (const payment of payments) {
       if (!payment.id) continue
 
+      const monto = payment.transaction_amount || 0
+      
+      // CLASIFICACIÓN AUTOMÁTICA:
+      // Monto positivo (+) = INGRESO (ventas, cobros)
+      // Monto negativo (-) = GASTO (compras, pagos)
+      const esIngreso = monto > 0
+      const esGasto = monto < 0
+
       const movimientoData = {
         mercadopago_id: payment.id.toString(),
-        monto: payment.transaction_amount || 0,
-        descripcion: payment.description || payment.statement_descriptor || 'Pago de MercadoPago',
+        monto: monto,
+        descripcion: payment.description || payment.statement_descriptor || 'Movimiento de MercadoPago',
         fecha: payment.date_created || new Date().toISOString(),
         estado: payment.status || 'pending',
         comprador_email: payment.payer?.email || null,
@@ -41,6 +49,7 @@ export async function GET(request: NextRequest) {
           payment_method: payment.payment_method_id,
           payment_type: payment.payment_type_id,
           currency: payment.currency_id,
+          tipo_detectado: esIngreso ? 'ingreso' : 'gasto',
           ...payment.metadata
         },
         clasificado: false

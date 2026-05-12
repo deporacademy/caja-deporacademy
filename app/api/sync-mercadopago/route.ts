@@ -30,6 +30,18 @@ export async function GET(request: NextRequest) {
     for (const payment of payments) {
       if (!payment.id) continue
 
+      // FILTRO: Detectar si es una COMPRA (no un ingreso)
+      // Las compras típicamente tienen estas características:
+      const descripcion = (payment.description || '').toUpperCase()
+      const esCompraML = descripcion.includes('MERCADOLIBRE') || 
+                         descripcion.includes('MERPAGO+')
+      
+      // Si detectamos que es una compra, la saltamos
+      if (esCompraML) {
+        console.log(`Saltando compra: ${payment.id} - ${payment.description}`)
+        continue
+      }
+
       const ingresoData = {
         mercadopago_id: payment.id.toString(),
         monto: payment.transaction_amount || 0,

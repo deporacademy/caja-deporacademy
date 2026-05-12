@@ -1,14 +1,17 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase, type Categoria } from '@/lib/supabase'
+import { supabase, type Categoria, type CategoriaIngreso } from '@/lib/supabase'
 import { Settings, Plus, Edit2, Trash2, X, RefreshCw } from 'lucide-react'
 
 export default function SettingsPage() {
   const [categorias, setCategorias] = useState<Categoria[]>([])
+  const [categoriasIngresos, setCategoriasIngresos] = useState<CategoriaIngreso[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [showModalIngreso, setShowModalIngreso] = useState(false)
   const [editingCategoria, setEditingCategoria] = useState<Categoria | null>(null)
+  const [editingCategoriaIngreso, setEditingCategoriaIngreso] = useState<CategoriaIngreso | null>(null)
   const [syncing, setSyncing] = useState(false)
 
   const [formData, setFormData] = useState({
@@ -16,8 +19,14 @@ export default function SettingsPage() {
     color: '#3B82F6'
   })
 
+  const [formDataIngreso, setFormDataIngreso] = useState({
+    nombre: '',
+    color: '#10B981'
+  })
+
   useEffect(() => {
     loadCategorias()
+    loadCategoriasIngresos()
   }, [])
 
   async function loadCategorias() {
@@ -32,6 +41,19 @@ export default function SettingsPage() {
       console.error('Error loading categorias:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function loadCategoriasIngresos() {
+    try {
+      const { data } = await supabase
+        .from('categorias_ingresos')
+        .select('*')
+        .order('nombre')
+
+      setCategoriasIngresos(data || [])
+    } catch (error) {
+      console.error('Error loading categorias ingresos:', error)
     }
   }
 

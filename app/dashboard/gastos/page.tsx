@@ -285,8 +285,8 @@ export default function GastosPage() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="card p-8 max-w-lg w-full animate-slide-up">
-            <div className="flex items-center justify-between mb-6">
+          <div className="card p-8 max-w-lg w-full animate-slide-up max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6 sticky top-0 bg-white pb-4 -mx-8 px-8">
               <h2 className="text-2xl font-bold text-slate-900">
                 {editingGasto ? 'Editar Gasto' : 'Nuevo Gasto'}
               </h2>

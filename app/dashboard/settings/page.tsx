@@ -116,6 +116,66 @@ export default function SettingsPage() {
     }
   }
 
+  // Funciones para categorías de ingresos
+  async function handleSubmitIngreso(e: React.FormEvent) {
+    e.preventDefault()
+
+    try {
+      if (editingCategoriaIngreso) {
+        const { error } = await supabase
+          .from('categorias_ingresos')
+          .update(formDataIngreso)
+          .eq('id', editingCategoriaIngreso.id)
+
+        if (error) throw error
+      } else {
+        const { error } = await supabase
+          .from('categorias_ingresos')
+          .insert(formDataIngreso)
+
+        if (error) throw error
+      }
+
+      resetFormIngreso()
+      loadCategoriasIngresos()
+    } catch (error) {
+      console.error('Error saving categoria ingreso:', error)
+      alert('Error al guardar la categoría')
+    }
+  }
+
+  function resetFormIngreso() {
+    setFormDataIngreso({ nombre: '', color: '#10B981' })
+    setEditingCategoriaIngreso(null)
+    setShowModalIngreso(false)
+  }
+
+  function handleEditIngreso(categoria: CategoriaIngreso) {
+    setEditingCategoriaIngreso(categoria)
+    setFormDataIngreso({
+      nombre: categoria.nombre,
+      color: categoria.color
+    })
+    setShowModalIngreso(true)
+  }
+
+  async function handleDeleteIngreso(id: string) {
+    if (!confirm('¿Estás seguro de eliminar esta categoría?')) return
+
+    try {
+      const { error } = await supabase
+        .from('categorias_ingresos')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+      loadCategoriasIngresos()
+    } catch (error) {
+      console.error('Error deleting categoria ingreso:', error)
+      alert('Error al eliminar la categoría')
+    }
+  }
+
   async function syncMercadoPago() {
     setSyncing(true)
     try {
@@ -169,7 +229,58 @@ export default function SettingsPage() {
         </button>
       </div>
 
-      {/* Categorías */}
+      {/* Categorías de Ingresos */}
+      <div className="card p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-slate-900">Categorías de Ingresos</h2>
+          <button
+            onClick={() => setShowModalIngreso(true)}
+            className="btn-secondary flex items-center gap-2"
+          >
+            <Plus className="w-5 h-5" />
+            Nueva Categoría
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {categoriasIngresos.map((categoria) => (
+            <div
+              key={categoria.id}
+              className="p-4 rounded-xl border border-slate-200 hover:border-slate-300 transition-all hover:shadow-md"
+              style={{ borderLeftWidth: '4px', borderLeftColor: categoria.color }}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div
+                      className="w-4 h-4 rounded-full"
+                      style={{ backgroundColor: categoria.color }}
+                    />
+                    <h3 className="font-semibold text-slate-900">{categoria.nombre}</h3>
+                  </div>
+                  <p className="text-xs text-slate-500">{categoria.color}</p>
+                </div>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => handleEditIngreso(categoria)}
+                    className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteIngreso(categoria.id)}
+                    className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Categorías de Gastos */}
       <div className="card p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-slate-900">Categorías de Gastos</h2>
@@ -310,6 +421,80 @@ export default function SettingsPage() {
                   className="flex-1 btn-primary"
                 >
                   {editingCategoria ? 'Actualizar' : 'Guardar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para categorías de ingresos */}
+      {showModalIngreso && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="card p-8 max-w-md w-full animate-slide-up">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-slate-900">
+                {editingCategoriaIngreso ? 'Editar Categoría de Ingreso' : 'Nueva Categoría de Ingreso'}
+              </h2>
+              <button
+                onClick={resetFormIngreso}
+                className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmitIngreso} className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Nombre *
+                </label>
+                <input
+                  type="text"
+                  value={formDataIngreso.nombre}
+                  onChange={(e) => setFormDataIngreso({ ...formDataIngreso, nombre: e.target.value })}
+                  className="input-field"
+                  placeholder="Ej: Venta libros MP"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Color *
+                </label>
+                <div className="flex gap-3">
+                  <input
+                    type="color"
+                    value={formDataIngreso.color}
+                    onChange={(e) => setFormDataIngreso({ ...formDataIngreso, color: e.target.value })}
+                    className="w-16 h-12 rounded-lg border border-slate-200 cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={formDataIngreso.color}
+                    onChange={(e) => setFormDataIngreso({ ...formDataIngreso, color: e.target.value })}
+                    className="input-field flex-1"
+                    placeholder="#10B981"
+                    pattern="^#[0-9A-Fa-f]{6}$"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={resetFormIngreso}
+                  className="flex-1 btn-secondary"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 btn-primary"
+                >
+                  {editingCategoriaIngreso ? 'Actualizar' : 'Guardar'}
                 </button>
               </div>
             </form>

@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       // Obtener detalles del pago desde MercadoPago
       const payment = await getPaymentById(paymentId.toString())
 
-      if (!payment) {
+      if (!payment || !payment.id) {
         return NextResponse.json({ error: 'Payment not found' }, { status: 404 })
       }
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase, type Gasto, type Categoria } from '@/lib/supabase'
-import { TrendingDown, Plus, Search, Edit2, Trash2, X } from 'lucide-react'
+import { TrendingDown, Plus, Search, Edit2, Trash2, X, FileText, Image as ImageIcon, Eye } from 'lucide-react'
 import { format } from 'date-fns'
 
 export default function GastosPage() {
@@ -14,6 +14,7 @@ export default function GastosPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterCategoria, setFilterCategoria] = useState<string>('all')
   const [comprobante, setComprobante] = useState<string | null>(null)
+  const [viewingComprobante, setViewingComprobante] = useState<string | null>(null)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -121,6 +122,7 @@ export default function GastosPage() {
       categoria_id: gasto.categoria_id || '',
       notas: gasto.notas || ''
     })
+    setComprobante(gasto.comprobante_base64 || null)
     setShowModal(true)
   }
 
@@ -249,6 +251,15 @@ export default function GastosPage() {
                 </p>
                 {gasto.notas && (
                   <p className="text-sm text-slate-500 italic">{gasto.notas}</p>
+                )}
+                {gasto.comprobante_base64 && (
+                  <button
+                    onClick={() => setViewingComprobante(gasto.comprobante_base64)}
+                    className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-colors text-sm font-medium"
+                  >
+                    <ImageIcon className="w-4 h-4" />
+                    Ver comprobante
+                  </button>
                 )}
               </div>
               <div className="flex items-center gap-3">
@@ -404,6 +415,29 @@ export default function GastosPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de visualización de comprobante */}
+      {viewingComprobante && (
+        <div 
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in"
+          onClick={() => setViewingComprobante(null)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh] animate-slide-up">
+            <button
+              onClick={() => setViewingComprobante(null)}
+              className="absolute -top-12 right-0 p-2 bg-white hover:bg-slate-100 rounded-lg transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <img 
+              src={viewingComprobante} 
+              alt="Comprobante" 
+              className="max-w-full max-h-[90vh] rounded-lg shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
           </div>
         </div>
       )}

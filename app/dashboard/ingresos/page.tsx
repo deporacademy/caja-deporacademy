@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase, type Ingreso, type CategoriaIngreso } from '@/lib/supabase'
+import { supabase, type Ingreso, type CategoriaIngreso, type Moneda } from '@/lib/supabase'
 import { TrendingUp, Search, Download, Trash2, Plus, X } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -22,6 +22,7 @@ export default function IngresosPage() {
     fecha: format(new Date(), 'yyyy-MM-dd'),
     categoria_id: '',
     comprador_email: '',
+    moneda: 'UYU' as Moneda,
     estado: 'approved'
   })
 
@@ -103,6 +104,7 @@ export default function IngresosPage() {
       fecha: format(new Date(), 'yyyy-MM-dd'),
       categoria_id: categorias[0]?.id || '',
       comprador_email: '',
+      moneda: 'UYU' as Moneda,
       estado: 'approved'
     })
     setComprobante(null)
@@ -312,7 +314,7 @@ export default function IngresosPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="text-lg font-bold text-green-700">
-                      ${Number(ingreso.monto).toLocaleString('es-UY')}
+                      ${Number(ingreso.monto).toLocaleString('es-UY')} {ingreso.moneda || 'UYU'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -385,21 +387,51 @@ export default function IngresosPage() {
 
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Categoría *
+                    Moneda *
                   </label>
-                  <select
-                    value={formData.categoria_id}
-                    onChange={(e) => setFormData({ ...formData, categoria_id: e.target.value })}
-                    className="input-field"
-                    required
-                  >
-                    {categorias.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.nombre}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="flex gap-4 mt-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="moneda"
+                        value="UYU"
+                        checked={formData.moneda === 'UYU'}
+                        onChange={(e) => setFormData({ ...formData, moneda: e.target.value as Moneda })}
+                        className="w-4 h-4 text-blue-600"
+                      />
+                      <span className="text-sm font-medium text-slate-700">🪙 Pesos</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="moneda"
+                        value="USD"
+                        checked={formData.moneda === 'USD'}
+                        onChange={(e) => setFormData({ ...formData, moneda: e.target.value as Moneda })}
+                        className="w-4 h-4 text-blue-600"
+                      />
+                      <span className="text-sm font-medium text-slate-700">💵 Dólares</span>
+                    </label>
+                  </div>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Categoría *
+                </label>
+                <select
+                  value={formData.categoria_id}
+                  onChange={(e) => setFormData({ ...formData, categoria_id: e.target.value })}
+                  className="input-field"
+                  required
+                >
+                  {categorias.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.nombre}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>

@@ -10,7 +10,8 @@ import {
   LogOut,
   Wallet,
   CheckSquare,
-  Calendar
+  Calendar,
+  RefreshCw
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
@@ -18,6 +19,7 @@ const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Ingresos', href: '/dashboard/ingresos', icon: TrendingUp },
   { name: 'Gastos', href: '/dashboard/gastos', icon: TrendingDown },
+  { name: 'Conversiones', href: '/dashboard/conversiones', icon: RefreshCw },
   { name: 'Revisar Movimientos', href: '/dashboard/revisar-movimientos', icon: CheckSquare },
   { name: 'Historial', href: '/dashboard/historial', icon: Calendar },
   { name: 'Configuración', href: '/dashboard/settings', icon: Settings },

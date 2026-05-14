@@ -71,6 +71,23 @@ export default function DashboardPage() {
   const totalGastos = gastos.reduce((sum, gasto) => sum + Number(gasto.monto), 0)
   const balance = totalIngresos - totalGastos
 
+  // Calcular totales por moneda
+  const ingresosUSD = ingresos
+    .filter(ing => ing.moneda === 'USD')
+    .reduce((sum, ing) => sum + Number(ing.monto), 0)
+  const gastosUSD = gastos
+    .filter(g => (g as any).moneda === 'USD')
+    .reduce((sum, g) => sum + Number(g.monto), 0)
+  const cajaUSD = ingresosUSD - gastosUSD
+
+  const ingresosUYU = ingresos
+    .filter(ing => !ing.moneda || ing.moneda === 'UYU')
+    .reduce((sum, ing) => sum + Number(ing.monto), 0)
+  const gastosUYU = gastos
+    .filter(g => !(g as any).moneda || (g as any).moneda === 'UYU')
+    .reduce((sum, g) => sum + Number(g.monto), 0)
+  const cajaUYU = ingresosUYU - gastosUYU
+
   // Datos para gráfico de línea (últimos 7 días)
   const lineData = Array.from({ length: 7 }, (_, i) => {
     const fecha = new Date()
@@ -131,50 +148,57 @@ export default function DashboardPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Ingresos */}
+        {/* Caja USD */}
         <div className="stat-card bg-gradient-to-br from-green-50 to-emerald-50 border-green-200/60">
           <div className="flex items-start justify-between mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl shadow-lg shadow-green-500/30 flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-white" />
+              <DollarSign className="w-6 h-6 text-white" />
             </div>
             <span className="badge badge-success">
-              <ArrowUpRight className="w-3 h-3" />
-              {ingresos.length}
+              💵 USD
             </span>
           </div>
-          <h3 className="text-sm font-semibold text-slate-600 mb-1">Total Ingresos</h3>
+          <h3 className="text-sm font-semibold text-slate-600 mb-1">Caja Dólares</h3>
           <p className="text-3xl font-bold text-green-700">
-            ${totalIngresos.toLocaleString('es-UY')}
+            ${cajaUSD.toLocaleString('es-UY')}
+          </p>
+          <p className="text-xs text-slate-500 mt-2">
+            Ingresos: ${ingresosUSD.toLocaleString('es-UY')} | Gastos: ${gastosUSD.toLocaleString('es-UY')}
           </p>
         </div>
 
-        {/* Gastos */}
-        <div className="stat-card bg-gradient-to-br from-red-50 to-orange-50 border-red-200/60">
+        {/* Caja UYU */}
+        <div className="stat-card bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200/60">
           <div className="flex items-start justify-between mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-orange-600 rounded-xl shadow-lg shadow-red-500/30 flex items-center justify-center">
-              <TrendingDown className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl shadow-lg shadow-blue-500/30 flex items-center justify-center">
+              <DollarSign className="w-6 h-6 text-white" />
             </div>
-            <span className="badge badge-error">
-              <ArrowDownRight className="w-3 h-3" />
-              {gastos.length}
+            <span className="badge badge-info">
+              🪙 UYU
             </span>
           </div>
-          <h3 className="text-sm font-semibold text-slate-600 mb-1">Total Gastos</h3>
-          <p className="text-3xl font-bold text-red-700">
-            ${totalGastos.toLocaleString('es-UY')}
+          <h3 className="text-sm font-semibold text-slate-600 mb-1">Caja Pesos</h3>
+          <p className="text-3xl font-bold text-blue-700">
+            ${cajaUYU.toLocaleString('es-UY')}
+          </p>
+          <p className="text-xs text-slate-500 mt-2">
+            Ingresos: ${ingresosUYU.toLocaleString('es-UY')} | Gastos: ${gastosUYU.toLocaleString('es-UY')}
           </p>
         </div>
 
-        {/* Balance */}
-        <div className={`stat-card ${balance >= 0 ? 'bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200/60' : 'bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200/60'}`}>
+        {/* Balance del mes */}
+        <div className={`stat-card ${balance >= 0 ? 'bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200/60' : 'bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200/60'}`}>
           <div className="flex items-start justify-between mb-4">
-            <div className={`w-12 h-12 ${balance >= 0 ? 'bg-gradient-to-br from-blue-500 to-cyan-600 shadow-blue-500/30' : 'bg-gradient-to-br from-amber-500 to-yellow-600 shadow-amber-500/30'} rounded-xl shadow-lg flex items-center justify-center`}>
-              <DollarSign className="w-6 h-6 text-white" />
+            <div className={`w-12 h-12 ${balance >= 0 ? 'bg-gradient-to-br from-purple-500 to-pink-600 shadow-purple-500/30' : 'bg-gradient-to-br from-amber-500 to-yellow-600 shadow-amber-500/30'} rounded-xl shadow-lg flex items-center justify-center`}>
+              <TrendingUp className="w-6 h-6 text-white" />
             </div>
           </div>
           <h3 className="text-sm font-semibold text-slate-600 mb-1">Balance del Mes</h3>
-          <p className={`text-3xl font-bold ${balance >= 0 ? 'text-blue-700' : 'text-amber-700'}`}>
+          <p className={`text-3xl font-bold ${balance >= 0 ? 'text-purple-700' : 'text-amber-700'}`}>
             ${balance.toLocaleString('es-UY')}
+          </p>
+          <p className="text-xs text-slate-500 mt-2">
+            Total ingresos: ${totalIngresos.toLocaleString('es-UY')} | Total gastos: ${totalGastos.toLocaleString('es-UY')}
           </p>
         </div>
       </div>
@@ -256,7 +280,7 @@ export default function DashboardPage() {
                   <p className="font-semibold text-slate-900">{ingreso.descripcion || 'Pago recibido'}</p>
                   <p className="text-xs text-slate-600">{format(new Date(ingreso.fecha), 'dd/MM/yyyy HH:mm')}</p>
                 </div>
-                <span className="font-bold text-green-700">+${Number(ingreso.monto).toLocaleString('es-UY')}</span>
+                <span className="font-bold text-green-700">+${Number(ingreso.monto).toLocaleString('es-UY')} {ingreso.moneda || 'UYU'}</span>
               </div>
             ))}
             {ingresos.length === 0 && (
@@ -278,7 +302,7 @@ export default function DashboardPage() {
                   <p className="font-semibold text-slate-900">{gasto.descripcion}</p>
                   <p className="text-xs text-slate-600">{format(new Date(gasto.fecha), 'dd/MM/yyyy')}</p>
                 </div>
-                <span className="font-bold text-red-700">-${Number(gasto.monto).toLocaleString('es-UY')}</span>
+                <span className="font-bold text-red-700">-${Number(gasto.monto).toLocaleString('es-UY')} {gasto.moneda || 'UYU'}</span>
               </div>
             ))}
             {gastos.length === 0 && (

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase, type Gasto, type Categoria } from '@/lib/supabase'
+import { supabase, type Gasto, type Categoria, type Moneda } from '@/lib/supabase'
 import { TrendingDown, Plus, Search, Edit2, Trash2, X, FileText, Image as ImageIcon, Eye } from 'lucide-react'
 import { format } from 'date-fns'
 
@@ -22,6 +22,7 @@ export default function GastosPage() {
     descripcion: '',
     fecha: format(new Date(), 'yyyy-MM-dd'),
     categoria_id: '',
+    moneda: 'UYU' as Moneda,
     notas: ''
   })
 
@@ -62,6 +63,7 @@ export default function GastosPage() {
         descripcion: formData.descripcion,
         fecha: formData.fecha,
         categoria_id: formData.categoria_id || null,
+        moneda: formData.moneda,
         notas: formData.notas || null,
         comprobante_base64: comprobante
       }
@@ -95,6 +97,7 @@ export default function GastosPage() {
       descripcion: '',
       fecha: format(new Date(), 'yyyy-MM-dd'),
       categoria_id: categorias[0]?.id || '',
+      moneda: 'UYU' as Moneda,
       notas: ''
     })
     setComprobante(null)
@@ -120,6 +123,7 @@ export default function GastosPage() {
       descripcion: gasto.descripcion,
       fecha: gasto.fecha,
       categoria_id: gasto.categoria_id || '',
+      moneda: gasto.moneda || 'UYU',
       notas: gasto.notas || ''
     })
     setComprobante(gasto.comprobante_base64 || null)
@@ -264,7 +268,7 @@ export default function GastosPage() {
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-2xl font-bold text-red-700">
-                  ${Number(gasto.monto).toLocaleString('es-UY')}
+                  {gasto.moneda === 'USD' ? '$' : '$'}{Number(gasto.monto).toLocaleString('es-UY')} {gasto.moneda}
                 </span>
                 <div className="flex gap-2">
                   <button
@@ -323,6 +327,36 @@ export default function GastosPage() {
                   placeholder="1000"
                   required
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Moneda *
+                </label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="moneda"
+                      value="UYU"
+                      checked={formData.moneda === 'UYU'}
+                      onChange={(e) => setFormData({ ...formData, moneda: e.target.value as Moneda })}
+                      className="w-4 h-4 text-blue-600"
+                    />
+                    <span className="text-sm font-medium text-slate-700">🪙 Pesos (UYU)</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="moneda"
+                      value="USD"
+                      checked={formData.moneda === 'USD'}
+                      onChange={(e) => setFormData({ ...formData, moneda: e.target.value as Moneda })}
+                      className="w-4 h-4 text-blue-600"
+                    />
+                    <span className="text-sm font-medium text-slate-700">💵 Dólares (USD)</span>
+                  </label>
+                </div>
               </div>
 
               <div>

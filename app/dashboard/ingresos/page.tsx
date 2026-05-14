@@ -66,12 +66,21 @@ export default function IngresosPage() {
     e.preventDefault()
 
     try {
-      const ingresoData = {
-        ...formData,
+      const ingresoData: any = {
         monto: parseFloat(formData.monto),
+        descripcion: formData.descripcion,
+        fecha: formData.fecha,
+        categoria_id: formData.categoria_id,
+        comprador_email: formData.comprador_email,
+        estado: formData.estado,
         mercadopago_id: `MANUAL-${Date.now()}`,
         comprobante_base64: comprobante,
         metadata: { tipo: 'manual' }
+      }
+
+      // Solo incluir moneda si el campo existe en la BD
+      if (formData.moneda) {
+        ingresoData.moneda = formData.moneda
       }
 
       if (editingIngreso) {

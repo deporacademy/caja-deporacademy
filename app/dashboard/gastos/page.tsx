@@ -58,14 +58,18 @@ export default function GastosPage() {
     e.preventDefault()
 
     try {
-      const gastoData = {
+      const gastoData: any = {
         monto: parseFloat(formData.monto),
         descripcion: formData.descripcion,
         fecha: formData.fecha,
         categoria_id: formData.categoria_id || null,
-        moneda: formData.moneda,
         notas: formData.notas || null,
         comprobante_base64: comprobante
+      }
+
+      // Solo incluir moneda si el campo existe en la BD
+      if (formData.moneda) {
+        gastoData.moneda = formData.moneda
       }
 
       if (editingGasto) {

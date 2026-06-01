@@ -6,9 +6,10 @@ import { cookies } from 'next/headers'
 
 export function createServerSupabaseClient() {
   const cookieStore = cookies()
+  // Usar SERVICE_ROLE_KEY para bypass de RLS en operaciones administrativas
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
     {
       cookies: {
         getAll() {

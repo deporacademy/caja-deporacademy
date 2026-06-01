@@ -35,6 +35,12 @@ export async function GET(request: NextRequest) {
     
     console.log(`✅ Se encontraron ${payments.length} pagos`)
 
+    // DEBUG: Imprimir estructura completa del primer pago
+    if (payments.length > 0) {
+      console.log('📊 ESTRUCTURA COMPLETA DEL PRIMER PAGO:')
+      console.log(JSON.stringify(payments[0], null, 2))
+    }
+
     let nuevos = 0
     let actualizados = 0
 
@@ -43,7 +49,15 @@ export async function GET(request: NextRequest) {
     for (const payment of payments) {
       if (!payment.id) continue
 
-      const monto = payment.transaction_amount || 0
+      // Usar net_received_amount si está disponible, si no usar transaction_amount
+      const monto = (payment as any).net_received_amount || payment.transaction_amount || 0
+      const montoOriginal = payment.transaction_amount || 0
+      const comision = montoOriginal - monto
+      
+      console.log(`💰 Pago ${payment.id}:`)
+      console.log(`   Monto original (lo que pagó cliente): ${montoOriginal}`)
+      console.log(`   Monto neto (lo que vos recibiste): ${monto}`)
+      console.log(`   Comisión MP: ${comision}`)
       
       const movimientoData = {
         mercadopago_id: payment.id.toString(),

@@ -201,25 +201,6 @@ export default function DashboardPage() {
             Total ingresos: ${totalIngresos.toLocaleString('es-UY')} | Total gastos: ${totalGastos.toLocaleString('es-UY')}
           </p>
         </div>
-
-        {/* Tasa de Ahorro */}
-        <div className="stat-card bg-gradient-to-br from-indigo-50 to-violet-50 border-indigo-200/60">
-          <div className="flex items-start justify-between mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl shadow-lg shadow-indigo-500/30 flex items-center justify-center">
-              <ArrowUpRight className="w-6 h-6 text-white" />
-            </div>
-            <span className="badge bg-indigo-100 text-indigo-800">
-              📊 Ahorro
-            </span>
-          </div>
-          <h3 className="text-sm font-semibold text-slate-600 mb-1">Tasa de Ahorro</h3>
-          <p className="text-3xl font-bold text-indigo-700">
-            {totalIngresos > 0 ? ((balance / totalIngresos) * 100).toFixed(1) : 0}%
-          </p>
-          <p className="text-xs text-slate-500 mt-2">
-            {totalIngresos > 0 ? `Ahorrado: $${balance.toLocaleString('es-UY')} de $${totalIngresos.toLocaleString('es-UY')}` : 'Sin ingresos'}
-          </p>
-        </div>
       </div>
 
       {/* Gráficos */}
@@ -246,26 +227,36 @@ export default function DashboardPage() {
           </ResponsiveContainer>
         </div>
 
-        {/* Gráfico de pie */}
+        {/* Gráfico de totales del mes */}
         <div className="card p-6">
-          <h3 className="text-lg font-bold text-slate-900 mb-4">Gastos por Categoría</h3>
-          {pieData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {pieData.map((entry: any, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
+          <h3 className="text-lg font-bold text-slate-900 mb-4">Total Mes (Acumulado)</h3>
+          <ResponsiveContainer width="100%" height={250}>
+            <LineChart data={[
+              {
+                nombre: 'Totales',
+                Ingresos: totalIngresos,
+                Gastos: totalGastos,
+                Balance: balance
+              }
+            ]}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="nombre" stroke="#64748b" style={{ fontSize: '12px' }} />
+              <YAxis stroke="#64748b" style={{ fontSize: '12px' }} />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+                  borderRadius: '12px',
+                  border: '1px solid #e2e8f0',
+                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                }}
+                formatter={(value: any) => `$${Number(value).toLocaleString('es-UY')}`}
+              />
+              <Line type="monotone" dataKey="Ingresos" stroke="#22c55e" strokeWidth={3} dot={{ fill: '#22c55e', r: 6 }} />
+              <Line type="monotone" dataKey="Gastos" stroke="#ef4444" strokeWidth={3} dot={{ fill: '#ef4444', r: 6 }} />
+              <Line type="monotone" dataKey="Balance" stroke="#8b5cf6" strokeWidth={3} dot={{ fill: '#8b5cf6', r: 6 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: 'rgba(255, 255, 255, 0.9)', 

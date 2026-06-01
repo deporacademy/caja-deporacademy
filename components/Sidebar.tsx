@@ -13,7 +13,6 @@ import {
   Calendar,
   RefreshCw
 } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -30,9 +29,15 @@ export default function Sidebar() {
   const router = useRouter()
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push('/')
-    router.refresh()
+    try {
+      const res = await fetch('/api/auth/logout', { method: 'POST' })
+      if (res.ok) {
+        router.push('/')
+        router.refresh()
+      }
+    } catch (error) {
+      console.error('Logout error:', error)
+    }
   }
 
   return (

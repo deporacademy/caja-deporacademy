@@ -1,12 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { Wallet, TrendingUp, DollarSign } from 'lucide-react'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -18,15 +17,24 @@ export default function LoginPage() {
     setError('')
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+      // Validar credenciales admin/123
+      if (username === 'admin' && password === '123') {
+        // Guardar token en cookie con fetch
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username })
+        })
 
-      if (error) throw error
-
-      router.push('/dashboard')
-      router.refresh()
+        if (res.ok) {
+          router.push('/dashboard')
+          router.refresh()
+        } else {
+          setError('Error al guardar la sesión')
+        }
+      } else {
+        setError('Usuario o contraseña incorrectos')
+      }
     } catch (error: any) {
       setError(error.message || 'Error al iniciar sesión')
     } finally {
@@ -60,14 +68,14 @@ export default function LoginPage() {
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">
-                Correo electrónico
+                Usuario
               </label>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 className="input-field"
-                placeholder="tu@email.com"
+                placeholder="admin"
                 required
               />
             </div>

@@ -31,24 +31,24 @@ export default function DashboardPage() {
 
   async function loadData() {
     try {
-      // Cargar ingresos del mes actual
-      const mesActual = new Date()
-      const inicioMes = startOfMonth(mesActual).toISOString()
-      const finMes = endOfMonth(mesActual).toISOString()
+      // Cargar datos de TODO EL AÑO (enero a diciembre)
+      const año = new Date().getFullYear()
+      const inicioAño = new Date(año, 0, 1).toISOString() // 1 enero
+      const finAño = new Date(año, 11, 31).toISOString()  // 31 diciembre
 
       const { data: ingresosData } = await supabase
         .from('ingresos')
         .select('*')
-        .gte('fecha', inicioMes)
-        .lte('fecha', finMes)
+        .gte('fecha', inicioAño)
+        .lte('fecha', finAño)
         .eq('estado', 'approved')
         .order('fecha', { ascending: false })
 
       const { data: gastosData } = await supabase
         .from('gastos')
         .select('*, categorias(nombre, color)')
-        .gte('fecha', format(new Date(inicioMes), 'yyyy-MM-dd'))
-        .lte('fecha', format(new Date(finMes), 'yyyy-MM-dd'))
+        .gte('fecha', format(new Date(inicioAño), 'yyyy-MM-dd'))
+        .lte('fecha', format(new Date(finAño), 'yyyy-MM-dd'))
         .order('fecha', { ascending: false })
 
       setIngresos(ingresosData || [])
@@ -64,30 +64,67 @@ export default function DashboardPage() {
   const totalGastos = gastos.reduce((sum, gasto) => sum + Number(gasto.monto), 0)
   const balance = totalIngresos - totalGastos
 
-  // Calcular totales por moneda
-  const ingresosUSD = ingresos
-    .filter(ing => ing.moneda === 'USD')
+  // Calcular totales del MES ACTUAL (para las tarjetas)
+  const mesActual = new Date()
+  const inicioMes = startOfMonth(mesActual).toISOString()
+  const finMes = endOfMonth(mesActual).toISOString()
+
+  const ingresosActuales = ingresos
+    .filter(ing => {
+      const ingDate = new Date(ing.fecha)
+      return ingDate >= new Date(inicioMes) && ingDate <= new Date(finMes)
+    })
     .reduce((sum, ing) => sum + Number(ing.monto), 0)
-  const gastosUSD = gastos
-    .filter(g => (g as any).moneda === 'USD')
+
+  const gastosActuales = gastos
+    .filter(g => {
+      const gastoDate = new Date(g.fecha)
+      return gastoDate >= new Date(inicioMes) && gastoDate <= new Date(finMes)
+    })
     .reduce((sum, g) => sum + Number(g.monto), 0)
+
+  const balanceActual = ingresosActuales - gastosActuales
+
+  // Calcular totales por moneda - MES ACTUAL (para tarjetas)
+  const ingresosUSD = ingresos
+    .filter(ing => {
+      const ingDate = new Date(ing.fecha)
+      return ing.moneda === 'USD' && ingDate >= new Date(inicioMes) && ingDate <= new Date(finMes)
+    })
+    .reduce((sum, ing) => sum + Number(ing.monto), 0)
+
+  const gastosUSD = gastos
+    .filter(g => {
+      const gastoDate = new Date(g.fecha)
+      return (g as any).moneda === 'USD' && gastoDate >= new Date(inicioMes) && gastoDate <= new Date(finMes)
+    })
+    .reduce((sum, g) => sum + Number(g.monto), 0)
+
   const cajaUSD = ingresosUSD - gastosUSD
 
   const ingresosUYU = ingresos
-    .filter(ing => !ing.moneda || ing.moneda === 'UYU')
+    .filter(ing => {
+      const ingDate = new Date(ing.fecha)
+      return (!ing.moneda || ing.moneda === 'UYU') && ingDate >= new Date(inicioMes) && ingDate <= new Date(finMes)
+    })
     .reduce((sum, ing) => sum + Number(ing.monto), 0)
+
   const gastosUYU = gastos
-    .filter(g => !(g as any).moneda || (g as any).moneda === 'UYU')
+    .filter(g => {
+      const gastoDate = new Date(g.fecha)
+      return (!(g as any).moneda || (g as any).moneda === 'UYU') && gastoDate >= new Date(inicioMes) && gastoDate <= new Date(finMes)
+    })
     .reduce((sum, g) => sum + Number(g.monto), 0)
+
   const cajaUYU = ingresosUYU - gastosUYU
 
   // Datos para gráfico del mes actual
   const mesActualData = [
     {
       nombre: format(new Date(), 'MMMM yyyy', { locale: es }),
-      Ingresos: totalIngresos,
-      Gastos: totalGastos,
-      Balance: balance
+      Ingresos: ingresosActuales,
+      Gastos: gastosActuales,
+      Balance: balanceActual
     }
   ]
 

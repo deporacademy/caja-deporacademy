@@ -201,6 +201,25 @@ export default function DashboardPage() {
             Total ingresos: ${totalIngresos.toLocaleString('es-UY')} | Total gastos: ${totalGastos.toLocaleString('es-UY')}
           </p>
         </div>
+
+        {/* Tasa de Ahorro */}
+        <div className="stat-card bg-gradient-to-br from-indigo-50 to-violet-50 border-indigo-200/60">
+          <div className="flex items-start justify-between mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl shadow-lg shadow-indigo-500/30 flex items-center justify-center">
+              <ArrowUpRight className="w-6 h-6 text-white" />
+            </div>
+            <span className="badge bg-indigo-100 text-indigo-800">
+              📊 Ahorro
+            </span>
+          </div>
+          <h3 className="text-sm font-semibold text-slate-600 mb-1">Tasa de Ahorro</h3>
+          <p className="text-3xl font-bold text-indigo-700">
+            {totalIngresos > 0 ? ((balance / totalIngresos) * 100).toFixed(1) : 0}%
+          </p>
+          <p className="text-xs text-slate-500 mt-2">
+            {totalIngresos > 0 ? `Ahorrado: $${balance.toLocaleString('es-UY')} de $${totalIngresos.toLocaleString('es-UY')}` : 'Sin ingresos'}
+          </p>
+        </div>
       </div>
 
       {/* Gráficos */}

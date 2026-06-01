@@ -118,17 +118,7 @@ export default function DashboardPage() {
 
   const cajaUYU = ingresosUYU - gastosUYU
 
-  // Datos para gráfico del mes actual
-  const mesActualData = [
-    {
-      nombre: format(new Date(), 'MMMM yyyy', { locale: es }),
-      Ingresos: ingresosActuales,
-      Gastos: gastosActuales,
-      Balance: balanceActual
-    }
-  ]
-
-  // Datos para gráfico del año (todos los meses)
+  // Datos para gráfico del año (todos los meses) - TODO
   const yearData = Array.from({ length: 12 }, (_, i) => {
     const monthDate = new Date(new Date().getFullYear(), i, 1)
     const startMonth = startOfMonth(monthDate).toISOString()
@@ -153,6 +143,34 @@ export default function DashboardPage() {
       Ingresos: ingresosMonth,
       Gastos: gastosMonth,
       Balance: ingresosMonth - gastosMonth
+    }
+  })
+
+  // Datos para gráfico del año (todos los meses) - SOLO DÓLARES
+  const yearDataUSD = Array.from({ length: 12 }, (_, i) => {
+    const monthDate = new Date(new Date().getFullYear(), i, 1)
+    const startMonth = startOfMonth(monthDate).toISOString()
+    const endMonth = endOfMonth(monthDate).toISOString()
+    
+    const ingresosMonthUSD = ingresos
+      .filter(ing => {
+        const ingDate = new Date(ing.fecha)
+        return ing.moneda === 'USD' && ingDate >= new Date(startMonth) && ingDate <= new Date(endMonth)
+      })
+      .reduce((sum, ing) => sum + Number(ing.monto), 0)
+    
+    const gastosMonthUSD = gastos
+      .filter(g => {
+        const gastoDate = new Date(g.fecha)
+        return (g as any).moneda === 'USD' && gastoDate >= new Date(startMonth) && gastoDate <= new Date(endMonth)
+      })
+      .reduce((sum, g) => sum + Number(g.monto), 0)
+
+    return {
+      mes: format(monthDate, 'MMM', { locale: es }),
+      Ingresos: ingresosMonthUSD,
+      Gastos: gastosMonthUSD,
+      Balance: ingresosMonthUSD - gastosMonthUSD
     }
   })
 
@@ -230,15 +248,15 @@ export default function DashboardPage() {
 
       {/* Gráficos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Gráfico del Mes Actual */}
+        {/* Gráfico del Año (Por Meses) - Dólares */}
         <div className="card p-6">
           <h3 className="text-lg font-bold text-slate-900 mb-4">
-            {format(new Date(), 'MMMM yyyy', { locale: es })} (Mes Actual)
+            {new Date().getFullYear()} (Dólares - Por Meses)
           </h3>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={mesActualData}>
+            <LineChart data={yearDataUSD}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="nombre" stroke="#64748b" style={{ fontSize: '12px' }} />
+              <XAxis dataKey="mes" stroke="#64748b" style={{ fontSize: '12px' }} />
               <YAxis stroke="#64748b" style={{ fontSize: '12px' }} />
               <Tooltip 
                 contentStyle={{ 
@@ -249,17 +267,17 @@ export default function DashboardPage() {
                 }}
                 formatter={(value: any) => `$${Number(value).toLocaleString('es-UY')}`}
               />
-              <Line type="monotone" dataKey="Ingresos" stroke="#22c55e" strokeWidth={3} dot={{ fill: '#22c55e', r: 6 }} />
-              <Line type="monotone" dataKey="Gastos" stroke="#ef4444" strokeWidth={3} dot={{ fill: '#ef4444', r: 6 }} />
-              <Line type="monotone" dataKey="Balance" stroke="#8b5cf6" strokeWidth={3} dot={{ fill: '#8b5cf6', r: 6 }} />
+              <Line type="monotone" dataKey="Ingresos" stroke="#22c55e" strokeWidth={2} dot={{ fill: '#22c55e', r: 4 }} />
+              <Line type="monotone" dataKey="Gastos" stroke="#ef4444" strokeWidth={2} dot={{ fill: '#ef4444', r: 4 }} />
+              <Line type="monotone" dataKey="Balance" stroke="#8b5cf6" strokeWidth={2} dot={{ fill: '#8b5cf6', r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Gráfico del Año (Por Meses) */}
+        {/* Gráfico del Año (Por Meses) - Total */}
         <div className="card p-6">
           <h3 className="text-lg font-bold text-slate-900 mb-4">
-            {new Date().getFullYear()} (Por Meses)
+            {new Date().getFullYear()} (Total - Por Meses)
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={yearData}>

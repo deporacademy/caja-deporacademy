@@ -6,9 +6,7 @@ import {
   TrendingUp, 
   TrendingDown, 
   DollarSign, 
-  Calendar,
-  ArrowUpRight,
-  ArrowDownRight
+  Calendar
 } from 'lucide-react'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -19,13 +17,8 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell
+  ResponsiveContainer
 } from 'recharts'
-
-const COLORS = ['#22c55e', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444']
 
 export default function DashboardPage() {
   const [ingresos, setIngresos] = useState<Ingreso[]>([])
@@ -88,44 +81,43 @@ export default function DashboardPage() {
     .reduce((sum, g) => sum + Number(g.monto), 0)
   const cajaUYU = ingresosUYU - gastosUYU
 
-  // Datos para gráfico de línea (últimos 7 días)
-  const lineData = Array.from({ length: 7 }, (_, i) => {
-    const fecha = new Date()
-    fecha.setDate(fecha.getDate() - (6 - i))
-    const fechaStr = format(fecha, 'yyyy-MM-dd')
+  // Datos para gráfico del mes actual
+  const mesActualData = [
+    {
+      nombre: format(new Date(), 'MMMM yyyy', { locale: es }),
+      Ingresos: totalIngresos,
+      Gastos: totalGastos,
+      Balance: balance
+    }
+  ]
+
+  // Datos para gráfico del año (todos los meses)
+  const yearData = Array.from({ length: 12 }, (_, i) => {
+    const monthDate = new Date(new Date().getFullYear(), i, 1)
+    const startMonth = startOfMonth(monthDate).toISOString()
+    const endMonth = endOfMonth(monthDate).toISOString()
     
-    const ingresoDia = ingresos
-      .filter(ing => format(new Date(ing.fecha), 'yyyy-MM-dd') === fechaStr)
+    const ingresosMonth = ingresos
+      .filter(ing => {
+        const ingDate = new Date(ing.fecha)
+        return ingDate >= new Date(startMonth) && ingDate <= new Date(endMonth)
+      })
       .reduce((sum, ing) => sum + Number(ing.monto), 0)
     
-    const gastoDia = gastos
-      .filter(g => g.fecha === fechaStr)
+    const gastosMonth = gastos
+      .filter(g => {
+        const gastoDate = new Date(g.fecha)
+        return gastoDate >= new Date(startMonth) && gastoDate <= new Date(endMonth)
+      })
       .reduce((sum, g) => sum + Number(g.monto), 0)
 
     return {
-      fecha: format(fecha, 'dd/MM', { locale: es }),
-      ingresos: ingresoDia,
-      gastos: gastoDia
+      mes: format(monthDate, 'MMM', { locale: es }),
+      Ingresos: ingresosMonth,
+      Gastos: gastosMonth,
+      Balance: ingresosMonth - gastosMonth
     }
   })
-
-  // Datos para gráfico de pie (gastos por categoría)
-  const gastosPorCategoria = gastos.reduce((acc: any, gasto: any) => {
-    const categoria = gasto.categorias?.nombre || 'Sin categoría'
-    const color = gasto.categorias?.color || '#6B7280'
-    
-    if (!acc[categoria]) {
-      acc[categoria] = { nombre: categoria, valor: 0, color }
-    }
-    acc[categoria].valor += Number(gasto.monto)
-    return acc
-  }, {})
-
-  const pieData = Object.values(gastosPorCategoria).map((cat: any) => ({
-    name: cat.nombre,
-    value: cat.valor,
-    color: cat.color
-  }))
 
   if (loading) {
     return (
@@ -147,7 +139,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Caja USD */}
         <div className="stat-card bg-gradient-to-br from-green-50 to-emerald-50 border-green-200/60">
           <div className="flex items-start justify-between mb-4">
@@ -165,6 +157,12 @@ export default function DashboardPage() {
           <p className="text-xs text-slate-500 mt-2">
             Ingresos: ${ingresosUSD.toLocaleString('es-UY')} | Gastos: ${gastosUSD.toLocaleString('es-UY')}
           </p>
+          <div className="mt-3 pt-3 border-t border-green-200/40">
+            <p className="text-xs text-slate-600 font-semibold">Balance USD:</p>
+            <p className={`text-lg font-bold ${cajaUSD >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+              ${cajaUSD.toLocaleString('es-UY')}
+            </p>
+          </div>
         </div>
 
         {/* Caja UYU */}
@@ -177,68 +175,31 @@ export default function DashboardPage() {
               🪙 UYU
             </span>
           </div>
-          <h3 className="text-sm font-semibold text-slate-600 mb-1">Caja Pesos</h3>
+          <h3 className="text-sm font-semibold text-slate-600 mb-1">Caja Pesos Uruguayos</h3>
           <p className="text-3xl font-bold text-blue-700">
             ${cajaUYU.toLocaleString('es-UY')}
           </p>
           <p className="text-xs text-slate-500 mt-2">
             Ingresos: ${ingresosUYU.toLocaleString('es-UY')} | Gastos: ${gastosUYU.toLocaleString('es-UY')}
           </p>
-        </div>
-
-        {/* Balance del mes */}
-        <div className={`stat-card ${balance >= 0 ? 'bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200/60' : 'bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200/60'}`}>
-          <div className="flex items-start justify-between mb-4">
-            <div className={`w-12 h-12 ${balance >= 0 ? 'bg-gradient-to-br from-purple-500 to-pink-600 shadow-purple-500/30' : 'bg-gradient-to-br from-amber-500 to-yellow-600 shadow-amber-500/30'} rounded-xl shadow-lg flex items-center justify-center`}>
-              <TrendingUp className="w-6 h-6 text-white" />
-            </div>
+          <div className="mt-3 pt-3 border-t border-blue-200/40">
+            <p className="text-xs text-slate-600 font-semibold">Balance UYU:</p>
+            <p className={`text-lg font-bold ${cajaUYU >= 0 ? 'text-blue-700' : 'text-red-700'}`}>
+              ${cajaUYU.toLocaleString('es-UY')}
+            </p>
           </div>
-          <h3 className="text-sm font-semibold text-slate-600 mb-1">Balance del Mes</h3>
-          <p className={`text-3xl font-bold ${balance >= 0 ? 'text-purple-700' : 'text-amber-700'}`}>
-            ${balance.toLocaleString('es-UY')}
-          </p>
-          <p className="text-xs text-slate-500 mt-2">
-            Total ingresos: ${totalIngresos.toLocaleString('es-UY')} | Total gastos: ${totalGastos.toLocaleString('es-UY')}
-          </p>
         </div>
       </div>
 
       {/* Gráficos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Gráfico de línea */}
+        {/* Gráfico del Mes Actual */}
         <div className="card p-6">
-          <h3 className="text-lg font-bold text-slate-900 mb-4">Últimos 7 días</h3>
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={lineData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="fecha" stroke="#64748b" style={{ fontSize: '12px' }} />
-              <YAxis stroke="#64748b" style={{ fontSize: '12px' }} />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'rgba(255, 255, 255, 0.9)', 
-                  borderRadius: '12px',
-                  border: '1px solid #e2e8f0',
-                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                }}
-              />
-              <Line type="monotone" dataKey="ingresos" stroke="#22c55e" strokeWidth={3} dot={{ fill: '#22c55e', r: 4 }} />
-              <Line type="monotone" dataKey="gastos" stroke="#ef4444" strokeWidth={3} dot={{ fill: '#ef4444', r: 4 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Gráfico de totales del mes */}
-        <div className="card p-6">
-          <h3 className="text-lg font-bold text-slate-900 mb-4">Total Mes (Acumulado)</h3>
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={[
-              {
-                nombre: 'Totales',
-                Ingresos: totalIngresos,
-                Gastos: totalGastos,
-                Balance: balance
-              }
-            ]}>
+          <h3 className="text-lg font-bold text-slate-900 mb-4">
+            {format(new Date(), 'MMMM yyyy', { locale: es })} (Mes Actual)
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={mesActualData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis dataKey="nombre" stroke="#64748b" style={{ fontSize: '12px' }} />
               <YAxis stroke="#64748b" style={{ fontSize: '12px' }} />
@@ -254,6 +215,32 @@ export default function DashboardPage() {
               <Line type="monotone" dataKey="Ingresos" stroke="#22c55e" strokeWidth={3} dot={{ fill: '#22c55e', r: 6 }} />
               <Line type="monotone" dataKey="Gastos" stroke="#ef4444" strokeWidth={3} dot={{ fill: '#ef4444', r: 6 }} />
               <Line type="monotone" dataKey="Balance" stroke="#8b5cf6" strokeWidth={3} dot={{ fill: '#8b5cf6', r: 6 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Gráfico del Año (Por Meses) */}
+        <div className="card p-6">
+          <h3 className="text-lg font-bold text-slate-900 mb-4">
+            {new Date().getFullYear()} (Por Meses)
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={yearData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="mes" stroke="#64748b" style={{ fontSize: '12px' }} />
+              <YAxis stroke="#64748b" style={{ fontSize: '12px' }} />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+                  borderRadius: '12px',
+                  border: '1px solid #e2e8f0',
+                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                }}
+                formatter={(value: any) => `$${Number(value).toLocaleString('es-UY')}`}
+              />
+              <Line type="monotone" dataKey="Ingresos" stroke="#22c55e" strokeWidth={2} dot={{ fill: '#22c55e', r: 4 }} />
+              <Line type="monotone" dataKey="Gastos" stroke="#ef4444" strokeWidth={2} dot={{ fill: '#ef4444', r: 4 }} />
+              <Line type="monotone" dataKey="Balance" stroke="#8b5cf6" strokeWidth={2} dot={{ fill: '#8b5cf6', r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>

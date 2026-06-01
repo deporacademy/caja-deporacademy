@@ -19,19 +19,12 @@ export default function LoginPage() {
     try {
       // Validar credenciales admin/123
       if (username === 'admin' && password === '123') {
-        // Guardar token en cookie con fetch
-        const res = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username })
-        })
-
-        if (res.ok) {
-          router.push('/dashboard')
-          router.refresh()
-        } else {
-          setError('Error al guardar la sesión')
-        }
+        // Guardar token en localStorage
+        localStorage.setItem('auth_token', 'admin_authenticated')
+        localStorage.setItem('user', 'admin')
+        
+        router.push('/dashboard')
+        router.refresh()
       } else {
         setError('Usuario o contraseña incorrectos')
       }

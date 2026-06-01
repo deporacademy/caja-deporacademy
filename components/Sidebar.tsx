@@ -29,15 +29,12 @@ export default function Sidebar() {
   const router = useRouter()
 
   const handleLogout = async () => {
-    try {
-      const res = await fetch('/api/auth/logout', { method: 'POST' })
-      if (res.ok) {
-        router.push('/')
-        router.refresh()
-      }
-    } catch (error) {
-      console.error('Logout error:', error)
-    }
+    // Limpiar localStorage
+    localStorage.removeItem('auth_token')
+    localStorage.removeItem('user')
+    
+    router.push('/')
+    router.refresh()
   }
 
   return (

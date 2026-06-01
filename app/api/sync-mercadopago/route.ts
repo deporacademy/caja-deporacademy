@@ -6,41 +6,35 @@ import { subMonths } from 'date-fns'
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
+  console.log('🚀 SYNC-MERCADOPAGO: Iniciando sincronización...')
+  
   try {
+    console.log('📦 Creando cliente de Supabase...')
     const supabase = createServerSupabaseClient()
     
+    console.log('⏰ Calculando fecha desde...')
     // Obtener pagos de los últimos 3 meses
     const fechaDesde = subMonths(new Date(), 3).toISOString()
+    console.log('📅 Buscando pagos desde:', fechaDesde)
+    
+    console.log('🔍 Llamando a getPayments...')
     const payments = await getPayments({
       dateFrom: fechaDesde,
       status: 'approved'
     })
-
-    // DEBUG: Ver datos completos de los primeros pagos
-    if (payments.length > 0) {
-      console.log('=== EJEMPLO DE PAYMENT ===')
-      console.log('Payment completo:', JSON.stringify(payments[0], null, 2))
-      console.log('transaction_amount:', payments[0].transaction_amount)
-      console.log('operation_type:', payments[0].operation_type)
-      console.log('transaction_details:', payments[0].transaction_details)
-      console.log('========================')
-    }
+    
+    console.log(`✅ Se encontraron ${payments.length} pagos`)
 
     let nuevos = 0
     let actualizados = 0
 
-    // Procesar cada pago y clasificarlo automáticamente por el signo del monto
+    // Procesar cada pago
+    console.log('📝 Procesando pagos...')
     for (const payment of payments) {
       if (!payment.id) continue
 
       const monto = payment.transaction_amount || 0
       
-      // CLASIFICACIÓN AUTOMÁTICA:
-      // Monto positivo (+) = INGRESO (ventas, cobros)
-      // Monto negativo (-) = GASTO (compras, pagos)
-      const esIngreso = monto > 0
-      const esGasto = monto < 0
-
       const movimientoData = {
         mercadopago_id: payment.id.toString(),
         monto: monto,
@@ -52,38 +46,54 @@ export async function GET(request: NextRequest) {
           payment_method: payment.payment_method_id,
           payment_type: payment.payment_type_id,
           currency: payment.currency_id,
-          tipo_detectado: esIngreso ? 'ingreso' : 'gasto',
           ...payment.metadata
         },
         clasificado: false
       }
 
       // Verificar si ya existe en movimientos pendientes
-      const { data: existente } = await supabase
+      const { data: existente, error: selectError } = await supabase
         .from('movimientos_pendientes')
         .select('id, estado, clasificado')
         .eq('mercadopago_id', movimientoData.mercadopago_id)
         .single()
 
+      if (selectError && selectError.code !== 'PGRST116') {
+        console.error('❌ Error SELECT movimientos_pendientes:', selectError)
+        throw selectError
+      }
+
       if (existente) {
         // Actualizar si cambió el estado y no ha sido clasificado
         if (!existente.clasificado && existente.estado !== movimientoData.estado) {
-          await supabase
+          const { error: updateError } = await supabase
             .from('movimientos_pendientes')
             .update({ estado: movimientoData.estado })
             .eq('id', existente.id)
+          
+          if (updateError) {
+            console.error('❌ Error UPDATE movimientos_pendientes:', updateError)
+            throw updateError
+          }
           actualizados++
         }
       } else {
         // Insertar nuevo movimiento pendiente
-        const { error } = await supabase
+        const { error: insertError } = await supabase
           .from('movimientos_pendientes')
           .insert(movimientoData)
         
-        if (!error) nuevos++
+        if (insertError) {
+          console.error('❌ Error INSERT movimientos_pendientes:', insertError)
+          throw insertError
+        }
+        
+        nuevos++
       }
     }
 
+    console.log(`✅ Sincronización completada: ${nuevos} nuevos, ${actualizados} actualizados`)
+    
     return NextResponse.json({
       success: true,
       total: payments.length,
@@ -93,10 +103,17 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error: any) {
-    console.error('Error syncing MercadoPago:', error)
-    return NextResponse.json(
-      { error: error.message || 'Error al sincronizar' },
-      { status: 500 }
-    )
+    console.error('❌ ERROR EN SYNC-MERCADOPAGO:', {
+      message: error.message,
+      code: error.code,
+      status: error.status,
+      details: error
+    })
+    
+    return NextResponse.json({
+      success: false,
+      error: error.message || 'Error al sincronizar',
+      details: error.code || error.status || 'Unknown error'
+    }, { status: 500 })
   }
 }

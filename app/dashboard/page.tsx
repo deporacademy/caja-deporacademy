@@ -257,22 +257,6 @@ export default function DashboardPage() {
             </LineChart>
           </ResponsiveContainer>
         </div>
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)', 
-                    borderRadius: '12px',
-                    border: '1px solid #e2e8f0'
-                  }}
-                  formatter={(value: any) => `$${value.toLocaleString('es-UY')}`}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="flex items-center justify-center h-[250px] text-slate-400">
-              No hay gastos registrados
-            </div>
-          )}
-        </div>
       </div>
 
       {/* Transacciones recientes */}

@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
 
     let nuevos = 0
     let actualizados = 0
+    const primerPago = payments.length > 0 ? payments[0] : null
 
     // Procesar cada pago
     console.log('📝 Procesando pagos...')
@@ -44,14 +45,17 @@ export async function GET(request: NextRequest) {
       if (!payment.id) continue
 
       // MercadoPago puede retornar el monto neto en diferentes campos:
-      // - net_received_amount (monto neto recibido)
-      // - transaction_amount (monto bruto, lo que pagó el cliente)
-      // - Calcular: net = gross - fees
-      
       const p = payment as any
       let montoNeto = 0
       let montoOriginal = p.transaction_amount || 0
       let comision = 0
+      
+      // DEBUG: Log toda la estructura del primer pago
+      if (payment.id === primerPago?.id) {
+        console.log('📊 ESTRUCTURA COMPLETA DEL PRIMER PAGO:')
+        console.log(JSON.stringify(payment, null, 2))
+        console.log('Campos disponibles:', Object.keys(payment))
+      }
       
       // Intentar obtener el monto neto de diferentes campos posibles
       if (p.net_received_amount !== undefined) {
@@ -63,13 +67,11 @@ export async function GET(request: NextRequest) {
         comision = montoOriginal - montoNeto
         console.log(`✅ Usando net_amount: ${montoNeto}`)
       } else if (p.fees !== undefined && Array.isArray(p.fees)) {
-        // Calcular sumando las comisiones
         const totalFees = p.fees.reduce((sum: number, fee: any) => sum + (fee.amount || 0), 0)
         montoNeto = montoOriginal - totalFees
         comision = totalFees
         console.log(`✅ Usando fees array: ${montoNeto}`)
       } else {
-        // Fallback: usar transaction_amount directamente
         montoNeto = montoOriginal
         console.log(`⚠️ No encontró monto neto, usando transaction_amount: ${montoNeto}`)
       }
@@ -144,13 +146,7 @@ export async function GET(request: NextRequest) {
       nuevos,
       actualizados,
       mensaje: 'Movimientos sincronizados. Por favor revísalos y clasifícalos.',
-      primerPago: payments.length > 0 ? {
-        id: payments[0].id,
-        transaction_amount: (payments[0] as any).transaction_amount,
-        net_received_amount: (payments[0] as any).net_received_amount,
-        monto_neto: (payments[0] as any).net_received_amount || (payments[0] as any).transaction_amount,
-        todosLosCampos: payments[0]
-      } : null
+      DEBUG_primerPago: primerPago // RETORNA EL PAGO COMPLETO PARA VER TODOS LOS CAMPOS
     })
 
   } catch (error: any) {

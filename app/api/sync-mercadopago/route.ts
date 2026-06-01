@@ -43,13 +43,42 @@ export async function GET(request: NextRequest) {
     for (const payment of payments) {
       if (!payment.id) continue
 
-      // Usar net_received_amount si está disponible, si no usar transaction_amount
-      const monto = (payment as any).net_received_amount || payment.transaction_amount || 0
-      const montoOriginal = payment.transaction_amount || 0
+      // MercadoPago puede retornar el monto neto en diferentes campos:
+      // - net_received_amount (monto neto recibido)
+      // - transaction_amount (monto bruto, lo que pagó el cliente)
+      // - Calcular: net = gross - fees
+      
+      const p = payment as any
+      let montoNeto = 0
+      let montoOriginal = p.transaction_amount || 0
+      let comision = 0
+      
+      // Intentar obtener el monto neto de diferentes campos posibles
+      if (p.net_received_amount !== undefined) {
+        montoNeto = p.net_received_amount
+        comision = montoOriginal - montoNeto
+        console.log(`✅ Usando net_received_amount: ${montoNeto}`)
+      } else if (p.net_amount !== undefined) {
+        montoNeto = p.net_amount
+        comision = montoOriginal - montoNeto
+        console.log(`✅ Usando net_amount: ${montoNeto}`)
+      } else if (p.fees !== undefined && Array.isArray(p.fees)) {
+        // Calcular sumando las comisiones
+        const totalFees = p.fees.reduce((sum: number, fee: any) => sum + (fee.amount || 0), 0)
+        montoNeto = montoOriginal - totalFees
+        comision = totalFees
+        console.log(`✅ Usando fees array: ${montoNeto}`)
+      } else {
+        // Fallback: usar transaction_amount directamente
+        montoNeto = montoOriginal
+        console.log(`⚠️ No encontró monto neto, usando transaction_amount: ${montoNeto}`)
+      }
+      
+      console.log(`💰 Pago ${p.id}: Original=${montoOriginal}, Neto=${montoNeto}, Comisión=${comision}`)
       
       const movimientoData = {
         mercadopago_id: payment.id.toString(),
-        monto: monto,
+        monto: montoNeto,
         descripcion: payment.description || payment.statement_descriptor || 'Movimiento de MercadoPago',
         fecha: payment.date_created || new Date().toISOString(),
         estado: payment.status || 'pending',
@@ -58,6 +87,9 @@ export async function GET(request: NextRequest) {
           payment_method: payment.payment_method_id,
           payment_type: payment.payment_type_id,
           currency: payment.currency_id,
+          monto_original: montoOriginal,
+          monto_neto: montoNeto,
+          comision_mercadopago: comision,
           ...payment.metadata
         },
         clasificado: false

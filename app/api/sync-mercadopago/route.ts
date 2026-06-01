@@ -58,7 +58,12 @@ export async function GET(request: NextRequest) {
       }
       
       // Intentar obtener el monto neto de diferentes campos posibles
-      if (p.net_received_amount !== undefined && p.net_received_amount > 0) {
+      // CORRECTO: MercadoPago retorna net_received_amount en transaction_details
+      if (p.transaction_details?.net_received_amount !== undefined && p.transaction_details.net_received_amount > 0) {
+        montoNeto = p.transaction_details.net_received_amount
+        comision = montoOriginal - montoNeto
+        console.log(`✅ Usando transaction_details.net_received_amount: ${montoNeto}`)
+      } else if (p.net_received_amount !== undefined && p.net_received_amount > 0) {
         montoNeto = p.net_received_amount
         comision = montoOriginal - montoNeto
         console.log(`✅ Usando net_received_amount: ${montoNeto}`)
@@ -67,12 +72,10 @@ export async function GET(request: NextRequest) {
         comision = montoOriginal - montoNeto
         console.log(`✅ Usando net_amount: ${montoNeto}`)
       } else if (p.fee !== undefined && typeof p.fee === 'object' && p.fee.amount !== undefined) {
-        // MercadoPago retorna las comisiones en un objeto fee
         comision = p.fee.amount
         montoNeto = montoOriginal - comision
         console.log(`✅ Usando fee.amount: comisión=${comision}, neto=${montoNeto}`)
       } else if (p.fees !== undefined && Array.isArray(p.fees) && p.fees.length > 0) {
-        // También puede ser un array de fees
         const totalFees = p.fees.reduce((sum: number, fee: any) => {
           if (typeof fee === 'object' && fee.amount !== undefined) {
             return sum + fee.amount
@@ -83,12 +86,10 @@ export async function GET(request: NextRequest) {
         comision = totalFees
         console.log(`✅ Usando fees array: comisión=${comision}, neto=${montoNeto}`)
       } else if (p.money_release !== undefined && p.money_release.amount !== undefined) {
-        // A veces está en money_release
         montoNeto = p.money_release.amount
         comision = montoOriginal - montoNeto
         console.log(`✅ Usando money_release.amount: ${montoNeto}`)
       } else {
-        // Fallback: usar transaction_amount directamente
         montoNeto = montoOriginal
         comision = 0
         console.log(`⚠️ No encontró información de comisión, usando transaction_amount completo: ${montoNeto}`)

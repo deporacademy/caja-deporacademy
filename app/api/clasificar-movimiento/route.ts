@@ -88,10 +88,18 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error: any) {
-    console.error('Error clasificando movimiento:', error)
-    return NextResponse.json(
-      { error: error.message || 'Error al clasificar movimiento' },
-      { status: 500 }
-    )
+    console.error('❌ Error clasificando movimiento:', {
+      message: error.message,
+      code: error.code,
+      status: error.status,
+      details: error
+    })
+    
+    return NextResponse.json({
+      success: false,
+      error: error.message || 'Error al clasificar movimiento',
+      code: error.code,
+      detalles: 'Verifica que las políticas RLS de ingresos/gastos permitan inserciones'
+    }, { status: 500 })
   }
 }

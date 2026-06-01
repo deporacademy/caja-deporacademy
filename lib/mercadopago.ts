@@ -12,6 +12,8 @@ export async function getPayments(filters?: {
   status?: string
 }) {
   try {
+    console.log('🔍 Buscando pagos con filtros:', filters)
+    
     const searchParams: any = {
       limit: 100,
       offset: 0,
@@ -19,34 +21,50 @@ export async function getPayments(filters?: {
       criteria: 'desc',
     }
 
-    // Si hay begin_date, DEBE haber end_date
+    // Agregar rango de fechas si se proporciona
     if (filters?.dateFrom) {
-      searchParams.range = `date_created`
       searchParams.begin_date = filters.dateFrom
       searchParams.end_date = filters.dateTo || new Date().toISOString()
+      console.log('📅 Rango de fechas:', searchParams.begin_date, 'a', searchParams.end_date)
     }
 
+    // Agregar estado si se proporciona
     if (filters?.status) {
       searchParams.status = filters.status
+      console.log('📊 Filtrando por estado:', filters.status)
     }
+
+    console.log('🚀 Parámetros de búsqueda:', searchParams)
 
     const response = await payment.search({
       options: searchParams,
     })
 
+    console.log('✅ Pagos encontrados:', response.results?.length || 0)
+    
     return response.results || []
-  } catch (error) {
-    console.error('Error fetching MercadoPago payments:', error)
+  } catch (error: any) {
+    console.error('❌ Error fetching MercadoPago payments:', {
+      message: error.message,
+      status: error.status,
+      response: error.response
+    })
     throw error
   }
 }
 
 export async function getPaymentById(paymentId: string) {
   try {
+    console.log('🔍 Obteniendo pago:', paymentId)
     const response = await payment.get({ id: paymentId })
+    console.log('✅ Pago obtenido correctamente')
     return response
-  } catch (error) {
-    console.error('Error fetching MercadoPago payment:', error)
+  } catch (error: any) {
+    console.error('❌ Error fetching MercadoPago payment:', {
+      paymentId,
+      message: error.message,
+      status: error.status
+    })
     throw error
   }
 }

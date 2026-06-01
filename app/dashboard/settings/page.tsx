@@ -61,26 +61,28 @@ export default function SettingsPage() {
     e.preventDefault()
 
     try {
-      if (editingCategoria) {
-        const { error } = await supabase
-          .from('categorias')
-          .update(formData)
-          .eq('id', editingCategoria.id)
+      const url = '/api/categorias'
+      const method = editingCategoria ? 'PUT' : 'POST'
+      const body = editingCategoria
+        ? { id: editingCategoria.id, ...formData }
+        : formData
 
-        if (error) throw error
-      } else {
-        const { error } = await supabase
-          .from('categorias')
-          .insert(formData)
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
 
-        if (error) throw error
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Error al guardar')
       }
 
       resetForm()
       loadCategorias()
     } catch (error) {
       console.error('Error saving categoria:', error)
-      alert('Error al guardar la categoría')
+      alert('Error al guardar la categoría: ' + (error as Error).message)
     }
   }
 
@@ -103,16 +105,19 @@ export default function SettingsPage() {
     if (!confirm('¿Estás seguro de eliminar esta categoría?')) return
 
     try {
-      const { error } = await supabase
-        .from('categorias')
-        .delete()
-        .eq('id', id)
+      const response = await fetch(`/api/categorias?id=${id}`, {
+        method: 'DELETE'
+      })
 
-      if (error) throw error
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Error al eliminar')
+      }
+
       loadCategorias()
     } catch (error) {
       console.error('Error deleting categoria:', error)
-      alert('Error al eliminar la categoría')
+      alert('Error al eliminar la categoría: ' + (error as Error).message)
     }
   }
 
@@ -121,26 +126,28 @@ export default function SettingsPage() {
     e.preventDefault()
 
     try {
-      if (editingCategoriaIngreso) {
-        const { error } = await supabase
-          .from('categorias_ingresos')
-          .update(formDataIngreso)
-          .eq('id', editingCategoriaIngreso.id)
+      const url = '/api/categorias-ingreso'
+      const method = editingCategoriaIngreso ? 'PUT' : 'POST'
+      const body = editingCategoriaIngreso
+        ? { id: editingCategoriaIngreso.id, ...formDataIngreso }
+        : formDataIngreso
 
-        if (error) throw error
-      } else {
-        const { error } = await supabase
-          .from('categorias_ingresos')
-          .insert(formDataIngreso)
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
 
-        if (error) throw error
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Error al guardar')
       }
 
       resetFormIngreso()
       loadCategoriasIngresos()
     } catch (error) {
       console.error('Error saving categoria ingreso:', error)
-      alert('Error al guardar la categoría')
+      alert('Error al guardar la categoría: ' + (error as Error).message)
     }
   }
 
@@ -163,16 +170,19 @@ export default function SettingsPage() {
     if (!confirm('¿Estás seguro de eliminar esta categoría?')) return
 
     try {
-      const { error } = await supabase
-        .from('categorias_ingresos')
-        .delete()
-        .eq('id', id)
+      const response = await fetch(`/api/categorias-ingreso?id=${id}`, {
+        method: 'DELETE'
+      })
 
-      if (error) throw error
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Error al eliminar')
+      }
+
       loadCategoriasIngresos()
     } catch (error) {
       console.error('Error deleting categoria ingreso:', error)
-      alert('Error al eliminar la categoría')
+      alert('Error al eliminar la categoría: ' + (error as Error).message)
     }
   }
 

@@ -8,6 +8,16 @@ export const dynamic = 'force-dynamic'
 export async function GET(request: NextRequest) {
   console.log('🚀 SYNC-MERCADOPAGO: Iniciando sincronización...')
   
+  // Validar que MERCADOPAGO_ACCESS_TOKEN esté configurado
+  if (!process.env.MERCADOPAGO_ACCESS_TOKEN) {
+    console.error('❌ MERCADOPAGO_ACCESS_TOKEN no está configurado en variables de entorno')
+    return NextResponse.json({
+      success: false,
+      error: 'MERCADOPAGO_ACCESS_TOKEN no configurado',
+      detalles: 'Verifica que esté en Vercel → Settings → Environment Variables'
+    }, { status: 500 })
+  }
+  
   try {
     console.log('📦 Creando cliente de Supabase...')
     const supabase = createServerSupabaseClient()

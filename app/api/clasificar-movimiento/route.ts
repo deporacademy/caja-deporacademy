@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
           fecha: movimiento.fecha,
           estado: movimiento.estado,
           comprador_email: movimiento.comprador_email,
+          moneda: 'UYU', // MercadoPago Uruguay = UYU
           metadata: movimiento.metadata
         })
 
@@ -63,10 +64,11 @@ export async function POST(request: NextRequest) {
       const { error: insertError } = await supabase
         .from('gastos')
         .insert({
-          monto: Math.abs(movimiento.monto), // Gastos siempre positivos
+          monto: Math.abs(movimiento.monto),
           descripcion: movimiento.descripcion || 'Gasto desde MercadoPago',
           fecha: movimiento.fecha,
-          categoria_id: null, // Sin categoría por defecto
+          categoria_id: null,
+          moneda: 'UYU', // MercadoPago Uruguay = UYU
           notas: `Sincronizado desde MercadoPago (ID: ${movimiento.mercadopago_id})`
         })
 

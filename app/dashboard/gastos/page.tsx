@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase, type Gasto, type Categoria, type Moneda } from '@/lib/supabase'
 import { TrendingDown, Plus, Search, Edit2, Trash2, X, FileText, Image as ImageIcon, Eye } from 'lucide-react'
 import { format, parse } from 'date-fns'
+import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from 'recharts'
 
 export default function GastosPage() {
   const [gastos, setGastos] = useState<any[]>([])
@@ -15,6 +16,7 @@ export default function GastosPage() {
   const [filterCategoria, setFilterCategoria] = useState<string>('all')
   const [comprobante, setComprobante] = useState<string | null>(null)
   const [viewingComprobante, setViewingComprobante] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'transacciones' | 'usd' | 'uyu'>('transacciones')
 
   // Form state
   const [formData, setFormData] = useState({
@@ -155,6 +157,29 @@ export default function GastosPage() {
 
   const totalGastos = gastosFiltrados.reduce((sum, gasto) => sum + Number(gasto.monto), 0)
 
+  // Función para calcular datos de pie chart por categoría
+  const getPieChartData = (moneda: 'USD' | 'UYU') => {
+    const gastosPorMoneda = gastos.filter(g => 
+      moneda === 'USD' 
+        ? (g as any).moneda === 'USD'
+        : !(g as any).moneda || (g as any).moneda === 'UYU'
+    )
+
+    const groupedByCategoria: { [key: string]: number } = {}
+
+    gastosPorMoneda.forEach(gasto => {
+      const categoriaNombre = gasto.categorias?.nombre || 'Sin categoría'
+      groupedByCategoria[categoriaNombre] = (groupedByCategoria[categoriaNombre] || 0) + Number(gasto.monto)
+    })
+
+    return Object.entries(groupedByCategoria).map(([nombre, monto]) => ({
+      name: nombre,
+      value: monto
+    }))
+  }
+
+  const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316']
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -242,70 +267,160 @@ export default function GastosPage() {
         </div>
       </div>
 
-      {/* Lista de gastos */}
-      <div className="grid gap-4">
-        {gastosFiltrados.map((gasto) => (
-          <div key={gasto.id} className="card p-6 hover:shadow-xl transition-all duration-300">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <h3 className="text-lg font-bold text-slate-900">{gasto.descripcion}</h3>
-                  {gasto.categorias && (
-                    <span 
-                      className="badge text-xs"
-                      style={{ 
-                        backgroundColor: `${gasto.categorias.color}20`,
-                        color: gasto.categorias.color,
-                        borderColor: `${gasto.categorias.color}40`
-                      }}
-                    >
-                      {gasto.categorias.nombre}
+      {/* Tabs */}
+      <div className="card p-6">
+        <div className="flex gap-4 border-b border-slate-200 mb-6">
+          <button
+            onClick={() => setActiveTab('transacciones')}
+            className={`px-4 py-3 font-semibold text-sm border-b-2 transition-colors ${
+              activeTab === 'transacciones'
+                ? 'border-red-600 text-red-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Transacciones
+          </button>
+          <button
+            onClick={() => setActiveTab('usd')}
+            className={`px-4 py-3 font-semibold text-sm border-b-2 transition-colors ${
+              activeTab === 'usd'
+                ? 'border-red-600 text-red-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Gastos USD 💵
+          </button>
+          <button
+            onClick={() => setActiveTab('uyu')}
+            className={`px-4 py-3 font-semibold text-sm border-b-2 transition-colors ${
+              activeTab === 'uyu'
+                ? 'border-red-600 text-red-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Gastos UYU 🪙
+          </button>
+        </div>
+
+        {/* TAB: Transacciones */}
+        {activeTab === 'transacciones' && (
+          <div className="grid gap-4">
+            {gastosFiltrados.map((gasto) => (
+              <div key={gasto.id} className="card p-6 hover:shadow-xl transition-all duration-300">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-lg font-bold text-slate-900">{gasto.descripcion}</h3>
+                      {gasto.categorias && (
+                        <span 
+                          className="badge text-xs"
+                          style={{ 
+                            backgroundColor: `${gasto.categorias.color}20`,
+                            color: gasto.categorias.color,
+                            borderColor: `${gasto.categorias.color}40`
+                          }}
+                        >
+                          {gasto.categorias.nombre}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-slate-600 mb-1">
+                      {format(parse(gasto.fecha, 'yyyy-MM-dd', new Date()), 'dd/MM/yyyy')}
+                    </p>
+                    {gasto.notas && (
+                      <p className="text-sm text-slate-500 italic">{gasto.notas}</p>
+                    )}
+                    {gasto.comprobante_base64 && (
+                      <button
+                        onClick={() => setViewingComprobante(gasto.comprobante_base64)}
+                        className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-colors text-sm font-medium"
+                      >
+                        <ImageIcon className="w-4 h-4" />
+                        Ver comprobante
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl font-bold text-red-700">
+                      {gasto.moneda === 'USD' ? '$' : '$'}{Number(gasto.monto).toLocaleString('es-UY')} {gasto.moneda}
                     </span>
-                  )}
-                </div>
-                <p className="text-sm text-slate-600 mb-1">
-                  {format(parse(gasto.fecha, 'yyyy-MM-dd', new Date()), 'dd/MM/yyyy')}
-                </p>
-                {gasto.notas && (
-                  <p className="text-sm text-slate-500 italic">{gasto.notas}</p>
-                )}
-                {gasto.comprobante_base64 && (
-                  <button
-                    onClick={() => setViewingComprobante(gasto.comprobante_base64)}
-                    className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-colors text-sm font-medium"
-                  >
-                    <ImageIcon className="w-4 h-4" />
-                    Ver comprobante
-                  </button>
-                )}
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-2xl font-bold text-red-700">
-                  {gasto.moneda === 'USD' ? '$' : '$'}{Number(gasto.monto).toLocaleString('es-UY')} {gasto.moneda}
-                </span>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleEdit(gasto)}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                  >
-                    <Edit2 className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(gasto.id)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEdit(gasto)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      >
+                        <Edit2 className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(gasto.id)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            ))}
+            {gastosFiltrados.length === 0 && (
+              <div className="card p-12 text-center text-slate-400">
+                {searchTerm || filterCategoria !== 'all' 
+                  ? 'No se encontraron gastos con los filtros seleccionados'
+                  : 'No hay gastos registrados. Agrega tu primer gasto.'}
+              </div>
+            )}
           </div>
-        ))}
-        {gastosFiltrados.length === 0 && (
-          <div className="card p-12 text-center text-slate-400">
-            {searchTerm || filterCategoria !== 'all' 
-              ? 'No se encontraron gastos con los filtros seleccionados'
-              : 'No hay gastos registrados. Agrega tu primer gasto.'}
+        )}
+
+        {/* TAB: Gastos USD */}
+        {activeTab === 'usd' && (
+          <div className="flex justify-center">
+            <ResponsiveContainer width="100%" height={400}>
+              <PieChart>
+                <Pie
+                  data={getPieChartData('USD')}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, value, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={120}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {getPieChartData('USD').map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => `$${Number(value).toLocaleString('es-UY')}`} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {/* TAB: Gastos UYU */}
+        {activeTab === 'uyu' && (
+          <div className="flex justify-center">
+            <ResponsiveContainer width="100%" height={400}>
+              <PieChart>
+                <Pie
+                  data={getPieChartData('UYU')}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, value, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={120}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {getPieChartData('UYU').map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => `$${Number(value).toLocaleString('es-UY')}`} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         )}
       </div>

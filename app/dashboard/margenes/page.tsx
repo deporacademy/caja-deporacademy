@@ -357,11 +357,12 @@ export default function MargenesPage() {
                   <th className="px-4 py-3 text-right font-semibold text-slate-700">$ Convertido</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-700">$ + Envío</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-700">Venta</th>
-                  <th className="px-4 py-3 text-right font-semibold text-slate-700">Ganancia</th>
-                  <th className="px-4 py-3 text-right font-semibold text-slate-700">Margen %</th>
+                  <th className="px-4 py-3 text-right font-semibold text-slate-700">Ganancia Contado</th>
+                  <th className="px-4 py-3 text-right font-semibold text-slate-700">Margen % Contado</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-700">MP Total</th>
+                  <th className="px-4 py-3 text-right font-semibold text-slate-700">Ganancia Crédito</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-700 bg-emerald-50">
-                    Ganancia Final
+                    Margen % Crédito
                   </th>
                   <th className="px-4 py-3 text-center font-semibold text-slate-700">Acciones</th>
                 </tr>
@@ -369,6 +370,7 @@ export default function MargenesPage() {
               <tbody className="divide-y divide-slate-200">
                 {librofutbolLibros.map((libro) => {
                   const calculo = calcularMargen(libro)
+                  const margenCredito = (calculo.gananciaFinal * 100) / calculo.precioConEnvio
                   return (
                     <tr key={libro.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-4 py-3 font-medium text-slate-900">{libro.titulo}</td>
@@ -399,8 +401,11 @@ export default function MargenesPage() {
                       <td className="px-4 py-3 text-right text-slate-600">
                         ${calculo.totalMP.toFixed(2)}
                       </td>
-                      <td className={`px-4 py-3 text-right font-bold bg-emerald-50 ${calculo.gananciaFinal >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                      <td className={`px-4 py-3 text-right font-semibold ${calculo.gananciaFinal >= 0 ? 'text-green-700' : 'text-red-700'}`}>
                         ${calculo.gananciaFinal.toFixed(2)}
+                      </td>
+                      <td className={`px-4 py-3 text-right font-bold bg-emerald-50 ${margenCredito >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                        {margenCredito.toFixed(1)}%
                       </td>
                       <td className="px-4 py-3 text-center">
                         <button

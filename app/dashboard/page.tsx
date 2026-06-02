@@ -181,12 +181,6 @@ export default function DashboardPage() {
           <p className="text-xs text-slate-500 mt-2">
             Ingresos: ${ingresosUSD.toLocaleString('es-UY')} | Gastos: ${gastosUSD.toLocaleString('es-UY')}
           </p>
-          <div className="mt-3 pt-3 border-t border-green-200/40">
-            <p className="text-xs text-slate-600 font-semibold">Balance USD:</p>
-            <p className={`text-lg font-bold ${cajaUSD >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-              ${cajaUSD.toLocaleString('es-UY')}
-            </p>
-          </div>
         </div>
 
         {/* Caja UYU */}
@@ -206,12 +200,6 @@ export default function DashboardPage() {
           <p className="text-xs text-slate-500 mt-2">
             Ingresos: ${ingresosUYU.toLocaleString('es-UY')} | Gastos: ${gastosUYU.toLocaleString('es-UY')}
           </p>
-          <div className="mt-3 pt-3 border-t border-blue-200/40">
-            <p className="text-xs text-slate-600 font-semibold">Balance UYU:</p>
-            <p className={`text-lg font-bold ${cajaUYU >= 0 ? 'text-blue-700' : 'text-red-700'}`}>
-              ${cajaUYU.toLocaleString('es-UY')}
-            </p>
-          </div>
         </div>
       </div>
 

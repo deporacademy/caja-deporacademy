@@ -64,56 +64,24 @@ export default function DashboardPage() {
   const totalGastos = gastos.reduce((sum, gasto) => sum + Number(gasto.monto), 0)
   const balance = totalIngresos - totalGastos
 
-  // Calcular totales del MES ACTUAL (para las tarjetas)
-  const mesActual = new Date()
-  const inicioMes = startOfMonth(mesActual).toISOString()
-  const finMes = endOfMonth(mesActual).toISOString()
-
-  const ingresosActuales = ingresos
-    .filter(ing => {
-      const ingDate = new Date(ing.fecha)
-      return ingDate >= new Date(inicioMes) && ingDate <= new Date(finMes)
-    })
-    .reduce((sum, ing) => sum + Number(ing.monto), 0)
-
-  const gastosActuales = gastos
-    .filter(g => {
-      const gastoDate = new Date(g.fecha)
-      return gastoDate >= new Date(inicioMes) && gastoDate <= new Date(finMes)
-    })
-    .reduce((sum, g) => sum + Number(g.monto), 0)
-
-  const balanceActual = ingresosActuales - gastosActuales
-
-  // Calcular totales por moneda - MES ACTUAL (para tarjetas)
+  // Calcular totales por moneda - TOTAL GENERAL (para tarjetas)
+  // Suma TODO sin filtro de fecha - es el saldo acumulado total
   const ingresosUSD = ingresos
-    .filter(ing => {
-      const ingDate = new Date(ing.fecha)
-      return ing.moneda === 'USD' && ingDate >= new Date(inicioMes) && ingDate <= new Date(finMes)
-    })
+    .filter(ing => ing.moneda === 'USD')
     .reduce((sum, ing) => sum + Number(ing.monto), 0)
 
   const gastosUSD = gastos
-    .filter(g => {
-      const gastoDate = new Date(g.fecha)
-      return (g as any).moneda === 'USD' && gastoDate >= new Date(inicioMes) && gastoDate <= new Date(finMes)
-    })
+    .filter(g => (g as any).moneda === 'USD')
     .reduce((sum, g) => sum + Number(g.monto), 0)
 
   const cajaUSD = ingresosUSD - gastosUSD
 
   const ingresosUYU = ingresos
-    .filter(ing => {
-      const ingDate = new Date(ing.fecha)
-      return (!ing.moneda || ing.moneda === 'UYU') && ingDate >= new Date(inicioMes) && ingDate <= new Date(finMes)
-    })
+    .filter(ing => !ing.moneda || ing.moneda === 'UYU')
     .reduce((sum, ing) => sum + Number(ing.monto), 0)
 
   const gastosUYU = gastos
-    .filter(g => {
-      const gastoDate = new Date(g.fecha)
-      return (!(g as any).moneda || (g as any).moneda === 'UYU') && gastoDate >= new Date(inicioMes) && gastoDate <= new Date(finMes)
-    })
+    .filter(g => !(g as any).moneda || (g as any).moneda === 'UYU')
     .reduce((sum, g) => sum + Number(g.monto), 0)
 
   const cajaUYU = ingresosUYU - gastosUYU

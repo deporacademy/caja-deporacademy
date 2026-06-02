@@ -8,7 +8,7 @@ import {
   DollarSign, 
   Calendar
 } from 'lucide-react'
-import { format, startOfMonth, endOfMonth } from 'date-fns'
+import { format, startOfMonth, endOfMonth, parse } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
   LineChart,

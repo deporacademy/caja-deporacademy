@@ -127,14 +127,14 @@ export default function DashboardPage() {
     const ingresosMonth = ingresos
       .filter(ing => {
         const ingDate = new Date(ing.fecha)
-        return ingDate >= new Date(startMonth) && ingDate <= new Date(endMonth)
+        return (!ing.moneda || ing.moneda === 'UYU') && ingDate >= new Date(startMonth) && ingDate <= new Date(endMonth)
       })
       .reduce((sum, ing) => sum + Number(ing.monto), 0)
     
     const gastosMonth = gastos
       .filter(g => {
         const gastoDate = new Date(g.fecha)
-        return gastoDate >= new Date(startMonth) && gastoDate <= new Date(endMonth)
+        return (!(g as any).moneda || (g as any).moneda === 'UYU') && gastoDate >= new Date(startMonth) && gastoDate <= new Date(endMonth)
       })
       .reduce((sum, g) => sum + Number(g.monto), 0)
 
@@ -274,10 +274,10 @@ export default function DashboardPage() {
           </ResponsiveContainer>
         </div>
 
-        {/* Gráfico del Año (Por Meses) - Total */}
+        {/* Gráfico del Año (Por Meses) - Pesos */}
         <div className="card p-6">
           <h3 className="text-lg font-bold text-slate-900 mb-4">
-            {new Date().getFullYear()} (Total - Por Meses)
+            {new Date().getFullYear()} (Pesos UYU - Por Meses)
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={yearData}>

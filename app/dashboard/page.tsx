@@ -301,7 +301,16 @@ export default function DashboardPage() {
               <div key={gasto.id} className="flex items-center justify-between p-3 bg-red-50/50 rounded-xl border border-red-100">
                 <div>
                   <p className="font-semibold text-slate-900">{gasto.descripcion}</p>
-                  <p className="text-xs text-slate-600">{format(new Date(gasto.fecha), 'dd/MM/yyyy')}</p>
+                  <p className="text-xs text-slate-600">
+                    {format(
+                      parse(
+                        gasto.fecha.includes('T') ? gasto.fecha.split('T')[0] : gasto.fecha,
+                        'yyyy-MM-dd',
+                        new Date()
+                      ),
+                      'dd/MM/yyyy'
+                    )}
+                  </p>
                 </div>
                 <span className="font-bold text-red-700">-${Number(gasto.monto).toLocaleString('es-UY')} {gasto.moneda || 'UYU'}</span>
               </div>

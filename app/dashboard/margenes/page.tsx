@@ -56,6 +56,8 @@ export default function MargenesPage() {
 
   interface CalculoMargen {
     precioBase: number
+    descuentoAplicado: number
+    precioConDescuento: number
     precioConvertido: number
     costoEnvio: number
     precioConEnvio: number
@@ -71,9 +73,11 @@ export default function MargenesPage() {
 
   const calcularMargen = (libro: Libro): CalculoMargen => {
     if (libro.proveedor === 'librofutbol') {
-      // LIBROFUTBOL (en dólares)
+      // LIBROFUTBOL (en dólares) - 30% descuento
       const precioBase = libro.precioUSD
-      const precioConvertido = precioBase * parametros.tipoCambio
+      const descuentoAplicado = 0.30 // 30%
+      const precioConDescuento = precioBase * (1 - descuentoAplicado)
+      const precioConvertido = precioConDescuento * parametros.tipoCambio
       
       // ENVÍO: precio convertido + (dólar * 4)
       const costoEnvio = precioConvertido + (parametros.tipoCambio * 4)
@@ -91,6 +95,8 @@ export default function MargenesPage() {
 
       return {
         precioBase,
+        descuentoAplicado,
+        precioConDescuento,
         precioConvertido,
         costoEnvio,
         precioConEnvio,
@@ -104,10 +110,12 @@ export default function MargenesPage() {
         gananciaFinal
       }
     } else {
-      // GUSSI (en pesos)
+      // GUSSI (en pesos) - 35% descuento
       const precioBase = libro.precioVenta
-      const ganancia = libro.precioVenta - precioBase
-      const margenContado = (ganancia * 100) / precioBase
+      const descuentoAplicado = 0.35 // 35%
+      const precioConDescuento = precioBase * (1 - descuentoAplicado)
+      const ganancia = precioBase - precioConDescuento
+      const margenContado = (ganancia * 100) / precioConDescuento
 
       const comisionMPCalc = libro.precioVenta * (-parametros.comisionMP / 100)
       const ivaComision = comisionMPCalc * (parametros.iva / 100)
@@ -118,9 +126,11 @@ export default function MargenesPage() {
 
       return {
         precioBase,
+        descuentoAplicado,
+        precioConDescuento,
         precioConvertido: 0,
         costoEnvio: 0,
-        precioConEnvio: precioBase,
+        precioConEnvio: precioConDescuento,
         ganancia,
         margenContado,
         comisionMPCalc,
@@ -342,6 +352,8 @@ export default function MargenesPage() {
                 <tr>
                   <th className="px-4 py-3 text-left font-semibold text-slate-700">Título</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-700">U$S</th>
+                  <th className="px-4 py-3 text-right font-semibold text-slate-700">Desc. 30%</th>
+                  <th className="px-4 py-3 text-right font-semibold text-slate-700">U$S Final</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-700">$ Convertido</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-700">Envío</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-700">Total Costo</th>
@@ -363,6 +375,12 @@ export default function MargenesPage() {
                       <td className="px-4 py-3 font-medium text-slate-900">{libro.titulo}</td>
                       <td className="px-4 py-3 text-right text-slate-600">
                         ${calculo.precioBase.toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-slate-600">
+                        ${(calculo.precioBase * calculo.descuentoAplicado).toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-slate-600">
+                        ${calculo.precioConDescuento.toFixed(2)}
                       </td>
                       <td className="px-4 py-3 text-right text-slate-600">
                         ${calculo.precioConvertido.toFixed(2)}
@@ -417,6 +435,8 @@ export default function MargenesPage() {
                 <tr>
                   <th className="px-4 py-3 text-left font-semibold text-slate-700">Título</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-700">Venta</th>
+                  <th className="px-4 py-3 text-right font-semibold text-slate-700">Desc. 35%</th>
+                  <th className="px-4 py-3 text-right font-semibold text-slate-700">Costo</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-700">Ganancia</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-700">Margen %</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-700">MP Total</th>
@@ -434,6 +454,12 @@ export default function MargenesPage() {
                       <td className="px-4 py-3 font-medium text-slate-900">{libro.titulo}</td>
                       <td className="px-4 py-3 text-right font-semibold text-slate-900">
                         ${libro.precioVenta.toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-slate-600">
+                        ${(libro.precioVenta * calculo.descuentoAplicado).toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-slate-600">
+                        ${calculo.precioConDescuento.toFixed(2)}
                       </td>
                       <td className={`px-4 py-3 text-right font-semibold ${calculo.ganancia >= 0 ? 'text-green-700' : 'text-red-700'}`}>
                         ${calculo.ganancia.toFixed(2)}

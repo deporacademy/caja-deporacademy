@@ -355,8 +355,7 @@ export default function MargenesPage() {
                   <th className="px-4 py-3 text-right font-semibold text-slate-700">Desc. 30%</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-700">U$S Final</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-700">$ Convertido</th>
-                  <th className="px-4 py-3 text-right font-semibold text-slate-700">Envío</th>
-                  <th className="px-4 py-3 text-right font-semibold text-slate-700">Total Costo</th>
+                  <th className="px-4 py-3 text-right font-semibold text-slate-700">$ + Envío</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-700">Venta</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-700">Ganancia</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-700">Margen %</th>
@@ -384,9 +383,6 @@ export default function MargenesPage() {
                       </td>
                       <td className="px-4 py-3 text-right text-slate-600">
                         ${calculo.precioConvertido.toFixed(2)}
-                      </td>
-                      <td className="px-4 py-3 text-right text-slate-600">
-                        ${calculo.costoEnvio.toFixed(2)}
                       </td>
                       <td className="px-4 py-3 text-right text-slate-600">
                         ${calculo.precioConEnvio.toFixed(2)}

@@ -11,13 +11,15 @@ import {
   Wallet,
   CheckSquare,
   Calendar,
-  RefreshCw
+  RefreshCw,
+  DollarSign
 } from 'lucide-react'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Ingresos', href: '/dashboard/ingresos', icon: TrendingUp },
   { name: 'Gastos', href: '/dashboard/gastos', icon: TrendingDown },
+  { name: 'Márgenes', href: '/dashboard/margenes', icon: DollarSign },
   { name: 'Conversiones', href: '/dashboard/conversiones', icon: RefreshCw },
   { name: 'Revisar Movimientos', href: '/dashboard/revisar-movimientos', icon: CheckSquare },
   { name: 'Historial', href: '/dashboard/historial', icon: Calendar },

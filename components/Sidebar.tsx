@@ -114,7 +114,7 @@ export default function Sidebar() {
 
       {/* Mobile Sidebar */}
       <aside
-        className={`md:hidden fixed left-0 top-0 h-full w-64 glass border-r border-slate-200/60 p-6 flex flex-col z-40 transform transition-transform duration-300 ease-out ${
+        className={`md:hidden fixed left-0 top-0 h-full w-64 bg-white border-r border-slate-200 shadow-lg p-6 flex flex-col z-40 transform transition-transform duration-300 ease-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >

@@ -218,20 +218,33 @@ export default function IngresosPage() {
         </button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Stats - Separadas por moneda */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Ingresos UYU */}
+        <div className="stat-card bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200/60">
+          <h3 className="text-sm font-semibold text-slate-600 mb-2">Total Ingresos UYU 🪙</h3>
+          <p className="text-3xl font-bold text-blue-700">
+            ${ingresosFiltrados
+              .filter(ing => !ing.moneda || ing.moneda === 'UYU')
+              .reduce((sum, ing) => sum + Number(ing.monto), 0)
+              .toLocaleString('es-UY')}
+          </p>
+          <p className="text-xs text-slate-500 mt-2">
+            {ingresosFiltrados.filter(ing => !ing.moneda || ing.moneda === 'UYU').length} transacciones
+          </p>
+        </div>
+
+        {/* Ingresos USD */}
         <div className="stat-card bg-gradient-to-br from-green-50 to-emerald-50 border-green-200/60">
-          <h3 className="text-sm font-semibold text-slate-600 mb-1">Total Aprobados</h3>
-          <p className="text-3xl font-bold text-green-700">${totalIngresos.toLocaleString('es-UY')}</p>
-        </div>
-        <div className="stat-card">
-          <h3 className="text-sm font-semibold text-slate-600 mb-1">Total Transacciones</h3>
-          <p className="text-3xl font-bold text-slate-900">{ingresosFiltrados.length}</p>
-        </div>
-        <div className="stat-card">
-          <h3 className="text-sm font-semibold text-slate-600 mb-1">Pendientes</h3>
-          <p className="text-3xl font-bold text-amber-600">
-            {ingresosFiltrados.filter(i => i.estado === 'pending').length}
+          <h3 className="text-sm font-semibold text-slate-600 mb-2">Total Ingresos USD 💵</h3>
+          <p className="text-3xl font-bold text-green-700">
+            ${ingresosFiltrados
+              .filter(ing => ing.moneda === 'USD')
+              .reduce((sum, ing) => sum + Number(ing.monto), 0)
+              .toLocaleString('es-UY')}
+          </p>
+          <p className="text-xs text-slate-500 mt-2">
+            {ingresosFiltrados.filter(ing => ing.moneda === 'USD').length} transacciones
           </p>
         </div>
       </div>

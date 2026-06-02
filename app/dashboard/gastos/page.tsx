@@ -183,20 +183,33 @@ export default function GastosPage() {
         </button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Stats - Separadas por moneda */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Gastos UYU */}
+        <div className="stat-card bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200/60">
+          <h3 className="text-sm font-semibold text-slate-600 mb-2">Total Gastos UYU 🪙</h3>
+          <p className="text-3xl font-bold text-blue-700">
+            ${gastosFiltrados
+              .filter(g => !(g as any).moneda || (g as any).moneda === 'UYU')
+              .reduce((sum, g) => sum + Number(g.monto), 0)
+              .toLocaleString('es-UY')}
+          </p>
+          <p className="text-xs text-slate-500 mt-2">
+            {gastosFiltrados.filter(g => !(g as any).moneda || (g as any).moneda === 'UYU').length} transacciones
+          </p>
+        </div>
+
+        {/* Gastos USD */}
         <div className="stat-card bg-gradient-to-br from-red-50 to-orange-50 border-red-200/60">
-          <h3 className="text-sm font-semibold text-slate-600 mb-1">Total Gastos</h3>
-          <p className="text-3xl font-bold text-red-700">${totalGastos.toLocaleString('es-UY')}</p>
-        </div>
-        <div className="stat-card">
-          <h3 className="text-sm font-semibold text-slate-600 mb-1">Cantidad</h3>
-          <p className="text-3xl font-bold text-slate-900">{gastosFiltrados.length}</p>
-        </div>
-        <div className="stat-card">
-          <h3 className="text-sm font-semibold text-slate-600 mb-1">Promedio</h3>
-          <p className="text-3xl font-bold text-slate-900">
-            ${gastosFiltrados.length > 0 ? (totalGastos / gastosFiltrados.length).toFixed(0) : '0'}
+          <h3 className="text-sm font-semibold text-slate-600 mb-2">Total Gastos USD 💵</h3>
+          <p className="text-3xl font-bold text-red-700">
+            ${gastosFiltrados
+              .filter(g => (g as any).moneda === 'USD')
+              .reduce((sum, g) => sum + Number(g.monto), 0)
+              .toLocaleString('es-UY')}
+          </p>
+          <p className="text-xs text-slate-500 mt-2">
+            {gastosFiltrados.filter(g => (g as any).moneda === 'USD').length} transacciones
           </p>
         </div>
       </div>

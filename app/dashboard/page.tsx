@@ -60,31 +60,32 @@ export default function DashboardPage() {
     }
   }
 
-  const totalIngresos = ingresos.reduce((sum, ing) => sum + Number(ing.monto), 0)
-  const totalGastos = gastos.reduce((sum, gasto) => sum + Number(gasto.monto), 0)
-  const balance = totalIngresos - totalGastos
-
-  // Calcular totales por moneda - TOTAL GENERAL (para tarjetas)
-  // Suma TODO sin filtro de fecha - es el saldo acumulado total
+  // Cálculos de INGRESOS por moneda (TOTAL GENERAL)
   const ingresosUSD = ingresos
     .filter(ing => ing.moneda === 'USD')
     .reduce((sum, ing) => sum + Number(ing.monto), 0)
-
-  const gastosUSD = gastos
-    .filter(g => (g as any).moneda === 'USD')
-    .reduce((sum, g) => sum + Number(g.monto), 0)
-
-  const cajaUSD = ingresosUSD - gastosUSD
 
   const ingresosUYU = ingresos
     .filter(ing => !ing.moneda || ing.moneda === 'UYU')
     .reduce((sum, ing) => sum + Number(ing.monto), 0)
 
+  // Cálculos de GASTOS por moneda (TOTAL GENERAL)
+  const gastosUSD = gastos
+    .filter(g => (g as any).moneda === 'USD')
+    .reduce((sum, g) => sum + Number(g.monto), 0)
+
   const gastosUYU = gastos
     .filter(g => !(g as any).moneda || (g as any).moneda === 'UYU')
     .reduce((sum, g) => sum + Number(g.monto), 0)
 
+  // BALANCES finales por moneda
+  const cajaUSD = ingresosUSD - gastosUSD
   const cajaUYU = ingresosUYU - gastosUYU
+
+  // Totales generales (para referencia)
+  const totalIngresos = ingresosUSD + ingresosUYU
+  const totalGastos = gastosUSD + gastosUYU
+  const balance = totalIngresos - totalGastos
 
   // Datos para gráfico del año (todos los meses) - TODO
   const yearData = Array.from({ length: 12 }, (_, i) => {

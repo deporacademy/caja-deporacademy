@@ -64,12 +64,8 @@ export default function GastosPage() {
         fecha: formData.fecha,
         categoria_id: formData.categoria_id || null,
         notas: formData.notas || null,
-        comprobante_base64: comprobante
-      }
-
-      // Solo incluir moneda si el campo existe en la BD
-      if (formData.moneda) {
-        gastoData.moneda = formData.moneda
+        comprobante_base64: comprobante,
+        moneda: formData.moneda || 'UYU' // SIEMPRE guardar moneda, UYU por defecto
       }
 
       if (editingGasto) {

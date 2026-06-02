@@ -5,6 +5,7 @@ import { supabase, type Ingreso, type CategoriaIngreso, type Moneda } from '@/li
 import { TrendingUp, Search, Download, Trash2, Plus, X } from 'lucide-react'
 import { format, parse } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from 'recharts'
 
 export default function IngresosPage() {
   const [ingresos, setIngresos] = useState<Ingreso[]>([])
@@ -15,6 +16,7 @@ export default function IngresosPage() {
   const [showModal, setShowModal] = useState(false)
   const [editingIngreso, setEditingIngreso] = useState<any>(null)
   const [comprobante, setComprobante] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'transacciones' | 'usd' | 'uyu'>('transacciones')
 
   const [formData, setFormData] = useState({
     monto: '',
@@ -166,6 +168,29 @@ export default function IngresosPage() {
     .filter(i => i.estado === 'approved')
     .reduce((sum, ing) => sum + Number(ing.monto), 0)
 
+  // Función para calcular datos de pie chart por categoría
+  const getPieChartData = (moneda: 'USD' | 'UYU') => {
+    const ingresosPorMoneda = ingresos.filter(i => 
+      moneda === 'USD' 
+        ? i.moneda === 'USD'
+        : !i.moneda || i.moneda === 'UYU'
+    )
+
+    const groupedByCategoria: { [key: string]: number } = {}
+
+    ingresosPorMoneda.forEach(ingreso => {
+      const categoriaNombre = ingreso.categorias_ingresos?.nombre || 'Sin categoría'
+      groupedByCategoria[categoriaNombre] = (groupedByCategoria[categoriaNombre] || 0) + Number(ingreso.monto)
+    })
+
+    return Object.entries(groupedByCategoria).map(([nombre, monto]) => ({
+      name: nombre,
+      value: monto
+    }))
+  }
+
+  const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316']
+
   const exportToCSV = () => {
     const headers = ['Fecha', 'Descripción', 'Monto', 'Estado', 'Email Comprador', 'ID MercadoPago']
     const rows = ingresosFiltrados.map(ing => [
@@ -284,94 +309,182 @@ export default function IngresosPage() {
         </div>
       </div>
 
-      {/* Lista de ingresos */}
-      <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                  Fecha
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                  Descripción
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                  Comprador
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                  Monto
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                  Estado
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {ingresosFiltrados.map((ingreso) => (
-                <tr key={ingreso.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-slate-900 font-medium">
-                      {format(parse(ingreso.fecha.split('T')[0], 'yyyy-MM-dd', new Date()), 'dd/MM/yyyy')}
-                    </div>
-                    <div className="text-xs text-slate-500">
-                      {format(parse(ingreso.fecha.split('T')[0], 'yyyy-MM-dd', new Date()), 'HH:mm')}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-slate-900 font-medium">
-                      {ingreso.descripcion || 'Pago recibido'}
-                    </div>
-                    <div className="text-xs text-slate-500">
-                      ID: {ingreso.mercadopago_id.slice(0, 15)}...
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-slate-900">
-                      {ingreso.comprador_email || 'N/A'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-lg font-bold text-green-700">
-                      ${Number(ingreso.monto).toLocaleString('es-UY')} {ingreso.moneda || 'UYU'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`badge ${
-                      ingreso.estado === 'approved' ? 'badge-success' :
-                      ingreso.estado === 'pending' ? 'badge-warning' :
-                      'badge-error'
-                    }`}>
-                      {ingreso.estado === 'approved' ? 'Aprobado' :
-                       ingreso.estado === 'pending' ? 'Pendiente' :
-                       'Rechazado'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <button
-                      onClick={() => eliminarIngreso(ingreso.id)}
-                      className="text-red-600 hover:text-red-800 transition-colors"
-                      title="Eliminar ingreso"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          
-          {ingresosFiltrados.length === 0 && (
-            <div className="text-center py-12 text-slate-400">
-              {searchTerm || filterEstado !== 'all' 
-                ? 'No se encontraron ingresos con los filtros seleccionados'
-                : 'No hay ingresos registrados. Sincroniza con MercadoPago para importar pagos.'}
-            </div>
-          )}
+      {/* Tabs */}
+      <div className="card">
+        <div className="flex gap-4 border-b border-slate-200 p-6 pb-0 mb-6">
+          <button
+            onClick={() => setActiveTab('transacciones')}
+            className={`px-4 py-3 font-semibold text-sm border-b-2 transition-colors ${
+              activeTab === 'transacciones'
+                ? 'border-green-600 text-green-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Transacciones
+          </button>
+          <button
+            onClick={() => setActiveTab('usd')}
+            className={`px-4 py-3 font-semibold text-sm border-b-2 transition-colors ${
+              activeTab === 'usd'
+                ? 'border-green-600 text-green-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Ingresos USD 💵
+          </button>
+          <button
+            onClick={() => setActiveTab('uyu')}
+            className={`px-4 py-3 font-semibold text-sm border-b-2 transition-colors ${
+              activeTab === 'uyu'
+                ? 'border-green-600 text-green-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Ingresos UYU 🪙
+          </button>
         </div>
+
+        {/* TAB: Transacciones */}
+        {activeTab === 'transacciones' && (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    Fecha
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    Descripción
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    Comprador
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    Monto
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    Estado
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {ingresosFiltrados.map((ingreso) => (
+                  <tr key={ingreso.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-slate-900 font-medium">
+                        {format(parse(ingreso.fecha.split('T')[0], 'yyyy-MM-dd', new Date()), 'dd/MM/yyyy')}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        {format(parse(ingreso.fecha.split('T')[0], 'yyyy-MM-dd', new Date()), 'HH:mm')}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-slate-900 font-medium">
+                        {ingreso.descripcion || 'Pago recibido'}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        ID: {ingreso.mercadopago_id.slice(0, 15)}...
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-slate-900">
+                        {ingreso.comprador_email || 'N/A'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-lg font-bold text-green-700">
+                        ${Number(ingreso.monto).toLocaleString('es-UY')} {ingreso.moneda || 'UYU'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`badge ${
+                        ingreso.estado === 'approved' ? 'badge-success' :
+                        ingreso.estado === 'pending' ? 'badge-warning' :
+                        'badge-error'
+                      }`}>
+                        {ingreso.estado === 'approved' ? 'Aprobado' :
+                         ingreso.estado === 'pending' ? 'Pendiente' :
+                         'Rechazado'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <button
+                        onClick={() => eliminarIngreso(ingreso.id)}
+                        className="text-red-600 hover:text-red-800 transition-colors"
+                        title="Eliminar ingreso"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            
+            {ingresosFiltrados.length === 0 && (
+              <div className="text-center py-12 text-slate-400">
+                {searchTerm || filterEstado !== 'all' 
+                  ? 'No se encontraron ingresos con los filtros seleccionados'
+                  : 'No hay ingresos registrados. Sincroniza con MercadoPago para importar pagos.'}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB: Ingresos USD */}
+        {activeTab === 'usd' && (
+          <div className="p-6 flex justify-center">
+            <ResponsiveContainer width="100%" height={400}>
+              <PieChart>
+                <Pie
+                  data={getPieChartData('USD')}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, value, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={120}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {getPieChartData('USD').map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => `$${Number(value).toLocaleString('es-UY')}`} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {/* TAB: Ingresos UYU */}
+        {activeTab === 'uyu' && (
+          <div className="p-6 flex justify-center">
+            <ResponsiveContainer width="100%" height={400}>
+              <PieChart>
+                <Pie
+                  data={getPieChartData('UYU')}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, value, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={120}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {getPieChartData('UYU').map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => `$${Number(value).toLocaleString('es-UY')}`} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
 
       {/* Modal para crear/editar ingreso */}

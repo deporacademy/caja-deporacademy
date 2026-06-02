@@ -80,7 +80,7 @@ export default function MargenesPage() {
       const precioConvertido = precioConDescuento * parametros.tipoCambio
       
       // ENVÍO: precio convertido + (dólar * 4)
-      const costoEnvio = precioConvertido + (parametros.tipoCambio * 4)
+      const costoEnvio = parametros.tipoCambio * 4
       const precioConEnvio = precioConvertido + costoEnvio
       
       const ganancia = libro.precioVenta - precioConEnvio

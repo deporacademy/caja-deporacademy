@@ -34,6 +34,11 @@ export type Ingreso = {
   moneda: Moneda
   metadata: any
   created_at: string
+  categorias_ingresos?: {
+    id: string
+    nombre: string
+    color?: string
+  } | null
 }
 
 export type Gasto = {
@@ -47,6 +52,11 @@ export type Gasto = {
   moneda: Moneda
   notas: string | null
   created_at: string
+  categorias?: {
+    id: string
+    nombre: string
+    color?: string
+  } | null
 }
 
 export type Conversion = {

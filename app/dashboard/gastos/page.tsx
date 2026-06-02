@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase, type Gasto, type Categoria, type Moneda } from '@/lib/supabase'
 import { TrendingDown, Plus, Search, Edit2, Trash2, X, FileText, Image as ImageIcon, Eye } from 'lucide-react'
-import { format } from 'date-fns'
+import { format, parse } from 'date-fns'
 
 export default function GastosPage() {
   const [gastos, setGastos] = useState<any[]>([])
@@ -255,7 +255,7 @@ export default function GastosPage() {
                   )}
                 </div>
                 <p className="text-sm text-slate-600 mb-1">
-                  {format(new Date(gasto.fecha), 'dd/MM/yyyy')}
+                  {format(parse(gasto.fecha, 'yyyy-MM-dd', new Date()), 'dd/MM/yyyy')}
                 </p>
                 {gasto.notas && (
                   <p className="text-sm text-slate-500 italic">{gasto.notas}</p>

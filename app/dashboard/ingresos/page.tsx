@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase, type Ingreso, type CategoriaIngreso, type Moneda } from '@/lib/supabase'
 import { TrendingUp, Search, Download, Trash2, Plus, X } from 'lucide-react'
-import { format } from 'date-fns'
+import { format, parse } from 'date-fns'
 import { es } from 'date-fns/locale'
 
 export default function IngresosPage() {
@@ -169,7 +169,7 @@ export default function IngresosPage() {
   const exportToCSV = () => {
     const headers = ['Fecha', 'Descripción', 'Monto', 'Estado', 'Email Comprador', 'ID MercadoPago']
     const rows = ingresosFiltrados.map(ing => [
-      format(new Date(ing.fecha), 'dd/MM/yyyy HH:mm'),
+      format(parse(ing.fecha, 'yyyy-MM-dd', new Date()), 'dd/MM/yyyy HH:mm'),
       ing.descripcion || '',
       ing.monto,
       ing.estado,
@@ -302,10 +302,10 @@ export default function IngresosPage() {
                 <tr key={ingreso.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-slate-900 font-medium">
-                      {format(new Date(ingreso.fecha), 'dd/MM/yyyy')}
+                      {format(parse(ingreso.fecha, 'yyyy-MM-dd', new Date()), 'dd/MM/yyyy')}
                     </div>
                     <div className="text-xs text-slate-500">
-                      {format(new Date(ingreso.fecha), 'HH:mm')}
+                      {format(parse(ingreso.fecha, 'yyyy-MM-dd', new Date()), 'HH:mm')}
                     </div>
                   </td>
                   <td className="px-6 py-4">

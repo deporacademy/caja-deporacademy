@@ -95,14 +95,18 @@ export default function DashboardPage() {
     
     const ingresosMonth = ingresos
       .filter(ing => {
-        const ingDate = new Date(ing.fecha)
+        // Parsear correctamente - split('T')[0] para ISO con hora, sino usar directo
+        const fechaStr = ing.fecha.includes('T') ? ing.fecha.split('T')[0] : ing.fecha
+        const ingDate = parse(fechaStr, 'yyyy-MM-dd', new Date())
         return (!ing.moneda || ing.moneda === 'UYU') && ingDate >= new Date(startMonth) && ingDate <= new Date(endMonth)
       })
       .reduce((sum, ing) => sum + Number(ing.monto), 0)
     
     const gastosMonth = gastos
       .filter(g => {
-        const gastoDate = new Date(g.fecha)
+        // Parsear correctamente - split('T')[0] para ISO con hora, sino usar directo
+        const fechaStr = (g as any).fecha.includes('T') ? (g as any).fecha.split('T')[0] : (g as any).fecha
+        const gastoDate = parse(fechaStr, 'yyyy-MM-dd', new Date())
         return (!(g as any).moneda || (g as any).moneda === 'UYU') && gastoDate >= new Date(startMonth) && gastoDate <= new Date(endMonth)
       })
       .reduce((sum, g) => sum + Number(g.monto), 0)
@@ -123,14 +127,18 @@ export default function DashboardPage() {
     
     const ingresosMonthUSD = ingresos
       .filter(ing => {
-        const ingDate = new Date(ing.fecha)
+        // Parsear correctamente - split('T')[0] para ISO con hora, sino usar directo
+        const fechaStr = ing.fecha.includes('T') ? ing.fecha.split('T')[0] : ing.fecha
+        const ingDate = parse(fechaStr, 'yyyy-MM-dd', new Date())
         return ing.moneda === 'USD' && ingDate >= new Date(startMonth) && ingDate <= new Date(endMonth)
       })
       .reduce((sum, ing) => sum + Number(ing.monto), 0)
     
     const gastosMonthUSD = gastos
       .filter(g => {
-        const gastoDate = new Date(g.fecha)
+        // Parsear correctamente - split('T')[0] para ISO con hora, sino usar directo
+        const fechaStr = (g as any).fecha.includes('T') ? (g as any).fecha.split('T')[0] : (g as any).fecha
+        const gastoDate = parse(fechaStr, 'yyyy-MM-dd', new Date())
         return (g as any).moneda === 'USD' && gastoDate >= new Date(startMonth) && gastoDate <= new Date(endMonth)
       })
       .reduce((sum, g) => sum + Number(g.monto), 0)

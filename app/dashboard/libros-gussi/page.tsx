@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { BookOpen, Plus, Trash2, Download } from 'lucide-react'
-import { format } from 'date-fns'
+import { format, parse } from 'date-fns'
 
 interface LibroGussi {
   id: string
@@ -32,7 +32,7 @@ export default function LibrosGussiPage() {
 
     const precioPublico = parseFloat(formLibro.precioPublico)
     const precioGussi = precioPublico * (1 - descuentoGussi)
-    const fecha = new Date(formLibro.fecha)
+    const fecha = parse(formLibro.fecha, 'yyyy-MM-dd', new Date())
 
     const nuevoLibro: LibroGussi = {
       id: Date.now().toString(),

@@ -231,7 +231,7 @@ export default function LibrosGussiPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
-                    {grupo.libros.map((libro) => (
+                    {grupo.libros.map((libro: LibroGussi) => (
                       <tr key={libro.id} className="hover:bg-slate-50 transition-colors">
                         <td className="px-4 py-3 font-medium text-slate-900">{libro.titulo}</td>
                         <td className="px-4 py-3 text-right text-slate-600">

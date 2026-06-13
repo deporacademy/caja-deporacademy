@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { BookOpen, Plus, Trash2, Download } from 'lucide-react'
 import { format, parse } from 'date-fns'
 
@@ -16,6 +16,7 @@ interface LibroGussi {
 
 export default function LibrosGussiPage() {
   const [libros, setLibros] = useState<LibroGussi[]>([])
+  const [expandedMeses, setExpandedMeses] = useState<Set<string>>(new Set())
   const [formLibro, setFormLibro] = useState({
     titulo: '',
     precioPublico: '',
@@ -23,6 +24,15 @@ export default function LibrosGussiPage() {
   })
 
   const descuentoGussi = 0.35 // 35%
+  
+  // Determinar el mes actual
+  const mesActual = new Date()
+  const mesActualKey = `${mesActual.getMonth() + 1}/${mesActual.getFullYear()}`
+
+  // Inicializar expandedMeses con el mes actual cuando se carga
+  useEffect(() => {
+    setExpandedMeses(new Set([mesActualKey]))
+  }, [])
 
   const agregarLibro = () => {
     if (!formLibro.titulo || !formLibro.precioPublico) {
@@ -54,6 +64,16 @@ export default function LibrosGussiPage() {
 
   const eliminarLibro = (id: string) => {
     setLibros(libros.filter(l => l.id !== id))
+  }
+
+  const toggleMes = (mesKey: string) => {
+    const newExpandedMeses = new Set(expandedMeses)
+    if (newExpandedMeses.has(mesKey)) {
+      newExpandedMeses.delete(mesKey)
+    } else {
+      newExpandedMeses.add(mesKey)
+    }
+    setExpandedMeses(newExpandedMeses)
   }
 
   // Agrupar por mes-año
@@ -188,79 +208,112 @@ export default function LibrosGussiPage() {
 
       {/* Libros por Mes */}
       {mesesOrdenados.length > 0 ? (
-        <div className="space-y-6">
-          {mesesOrdenados.map((grupo) => (
-            <div key={`${grupo.mes}-${grupo.año}`} className="card p-6">
-              <h2 className="text-xl font-bold text-slate-900 mb-4">
-                📚 {meses[grupo.mes]} {grupo.año}
-              </h2>
+        <div className="space-y-4">
+          {mesesOrdenados.map((grupo) => {
+            const mesKey = `${grupo.mes}/${grupo.año}`
+            const isCurrentMes = mesKey === mesActualKey
+            const isExpanded = expandedMeses.has(mesKey)
 
-              {/* Subtotales del mes */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-slate-50 rounded-lg">
-                <div>
-                  <p className="text-sm text-slate-600">Precio Público</p>
-                  <p className="text-xl font-bold text-slate-900">
-                    ${grupo.totalPublico.toLocaleString('es-UY', { minimumFractionDigits: 2 })}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-600">A Pagar a Gussi</p>
-                  <p className="text-xl font-bold text-blue-700">
-                    ${grupo.totalGussi.toLocaleString('es-UY', { minimumFractionDigits: 2 })}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-600">Descuento (35%)</p>
-                  <p className="text-xl font-bold text-green-700">
-                    ${grupo.descuentoTotal.toLocaleString('es-UY', { minimumFractionDigits: 2 })}
-                  </p>
-                </div>
-              </div>
+            return (
+              <div key={mesKey} className={`card overflow-hidden ${isCurrentMes ? 'border-blue-300 border-2' : ''}`}>
+                {/* Header Deplegable */}
+                <button
+                  onClick={() => toggleMes(mesKey)}
+                  className="w-full p-6 flex items-center justify-between hover:bg-slate-50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <h2 className={`text-xl font-bold ${isCurrentMes ? 'text-blue-700' : 'text-slate-900'}`}>
+                      📚 {meses[grupo.mes]} {grupo.año}
+                      {isCurrentMes && <span className="ml-2 text-sm text-blue-600 font-semibold">(Mes Actual)</span>}
+                    </h2>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-semibold text-slate-600">
+                      {grupo.libros.length} libro{grupo.libros.length !== 1 ? 's' : ''}
+                    </span>
+                    <svg
+                      className={`w-5 h-5 text-slate-600 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                    </svg>
+                  </div>
+                </button>
 
-              {/* Tabla de libros */}
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-slate-100 border-b border-slate-200">
-                    <tr>
-                      <th className="px-4 py-3 text-left font-semibold text-slate-700">Título</th>
-                      <th className="px-4 py-3 text-right font-semibold text-slate-700">Fecha</th>
-                      <th className="px-4 py-3 text-right font-semibold text-slate-700">Precio Público</th>
-                      <th className="px-4 py-3 text-right font-semibold text-slate-700">Descuento (35%)</th>
-                      <th className="px-4 py-3 text-right font-semibold text-slate-700 bg-blue-50">A Pagar Gussi</th>
-                      <th className="px-4 py-3 text-center font-semibold text-slate-700">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200">
-                    {grupo.libros.map((libro: LibroGussi) => (
-                      <tr key={libro.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-4 py-3 font-medium text-slate-900">{libro.titulo}</td>
-                        <td className="px-4 py-3 text-right text-slate-600">
-                          {format(new Date(libro.fecha), 'dd/MM/yyyy')}
-                        </td>
-                        <td className="px-4 py-3 text-right text-slate-600">
-                          ${libro.precioPublico.toLocaleString('es-UY', { minimumFractionDigits: 2 })}
-                        </td>
-                        <td className="px-4 py-3 text-right text-green-700 font-semibold">
-                          ${(libro.precioPublico - libro.precioGussi).toLocaleString('es-UY', { minimumFractionDigits: 2 })}
-                        </td>
-                        <td className="px-4 py-3 text-right font-bold bg-blue-50 text-blue-700">
-                          ${libro.precioGussi.toLocaleString('es-UY', { minimumFractionDigits: 2 })}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <button
-                            onClick={() => eliminarLibro(libro.id)}
-                            className="text-red-600 hover:text-red-800 p-1"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                {/* Contenido Deplegable */}
+                {isExpanded && (
+                  <>
+                    {/* Subtotales del mes */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 bg-slate-50 border-t border-slate-200">
+                      <div>
+                        <p className="text-sm text-slate-600">Precio Público</p>
+                        <p className="text-xl font-bold text-slate-900">
+                          ${grupo.totalPublico.toLocaleString('es-UY', { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-600">A Pagar a Gussi</p>
+                        <p className="text-xl font-bold text-blue-700">
+                          ${grupo.totalGussi.toLocaleString('es-UY', { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-600">Descuento (35%)</p>
+                        <p className="text-xl font-bold text-green-700">
+                          ${grupo.descuentoTotal.toLocaleString('es-UY', { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Tabla de libros */}
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-slate-100 border-b border-slate-200">
+                          <tr>
+                            <th className="px-4 py-3 text-left font-semibold text-slate-700">Título</th>
+                            <th className="px-4 py-3 text-right font-semibold text-slate-700">Fecha</th>
+                            <th className="px-4 py-3 text-right font-semibold text-slate-700">Precio Público</th>
+                            <th className="px-4 py-3 text-right font-semibold text-slate-700">Descuento (35%)</th>
+                            <th className="px-4 py-3 text-right font-semibold text-slate-700 bg-blue-50">A Pagar Gussi</th>
+                            <th className="px-4 py-3 text-center font-semibold text-slate-700">Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-200">
+                          {grupo.libros.map((libro: LibroGussi) => (
+                            <tr key={libro.id} className="hover:bg-slate-50 transition-colors">
+                              <td className="px-4 py-3 font-medium text-slate-900">{libro.titulo}</td>
+                              <td className="px-4 py-3 text-right text-slate-600">
+                                {format(new Date(libro.fecha), 'dd/MM/yyyy')}
+                              </td>
+                              <td className="px-4 py-3 text-right text-slate-600">
+                                ${libro.precioPublico.toLocaleString('es-UY', { minimumFractionDigits: 2 })}
+                              </td>
+                              <td className="px-4 py-3 text-right text-green-700 font-semibold">
+                                ${(libro.precioPublico - libro.precioGussi).toLocaleString('es-UY', { minimumFractionDigits: 2 })}
+                              </td>
+                              <td className="px-4 py-3 text-right font-bold bg-blue-50 text-blue-700">
+                                ${libro.precioGussi.toLocaleString('es-UY', { minimumFractionDigits: 2 })}
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                <button
+                                  onClick={() => eliminarLibro(libro.id)}
+                                  className="text-red-600 hover:text-red-800 p-1"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       ) : (
         <div className="card p-12 text-center text-slate-400">

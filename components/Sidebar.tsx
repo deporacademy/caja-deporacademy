@@ -15,7 +15,8 @@ import {
   RefreshCw,
   DollarSign,
   Menu,
-  X
+  X,
+  BookOpen
 } from 'lucide-react'
 
 const navigation = [
@@ -23,6 +24,7 @@ const navigation = [
   { name: 'Ingresos', href: '/dashboard/ingresos', icon: TrendingUp },
   { name: 'Gastos', href: '/dashboard/gastos', icon: TrendingDown },
   { name: 'Márgenes', href: '/dashboard/margenes', icon: DollarSign },
+  { name: 'Libros Gussi', href: '/dashboard/libros-gussi', icon: BookOpen },
   { name: 'Conversiones', href: '/dashboard/conversiones', icon: RefreshCw },
   { name: 'Revisar Movimientos', href: '/dashboard/revisar-movimientos', icon: CheckSquare },
   { name: 'Historial', href: '/dashboard/historial', icon: Calendar },

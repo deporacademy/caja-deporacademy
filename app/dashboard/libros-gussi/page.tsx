@@ -1,14 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { BookOpen, Plus, Trash2, Download } from 'lucide-react'
+import { BookOpen, Plus, Trash2 } from 'lucide-react'
 import { format, parse } from 'date-fns'
+import { supabase } from '@/lib/supabase'
 
 interface LibroGussi {
   id: string
   titulo: string
-  precioPublico: number
-  precioGussi: number
+  precio_publico: number
+  precio_gussi: number
   fecha: string
   mes: number
   año: number
@@ -17,6 +18,7 @@ interface LibroGussi {
 export default function LibrosGussiPage() {
   const [libros, setLibros] = useState<LibroGussi[]>([])
   const [expandedMeses, setExpandedMeses] = useState<Set<string>>(new Set())
+  const [loading, setLoading] = useState(true)
   const [formLibro, setFormLibro] = useState({
     titulo: '',
     precioPublico: '',
@@ -29,12 +31,30 @@ export default function LibrosGussiPage() {
   const mesActual = new Date()
   const mesActualKey = `${mesActual.getMonth() + 1}/${mesActual.getFullYear()}`
 
-  // Inicializar expandedMeses con el mes actual cuando se carga
+  // Cargar libros desde Supabase
   useEffect(() => {
+    cargarLibros()
     setExpandedMeses(new Set([mesActualKey]))
   }, [])
 
-  const agregarLibro = () => {
+  async function cargarLibros() {
+    try {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from('libros_gussi')
+        .select('*')
+        .order('fecha', { ascending: false })
+
+      if (error) throw error
+      setLibros(data || [])
+    } catch (error) {
+      console.error('Error cargando libros:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const agregarLibro = async () => {
     if (!formLibro.titulo || !formLibro.precioPublico) {
       alert('Completa todos los campos')
       return
@@ -44,26 +64,47 @@ export default function LibrosGussiPage() {
     const precioGussi = precioPublico * (1 - descuentoGussi)
     const fecha = parse(formLibro.fecha, 'yyyy-MM-dd', new Date())
 
-    const nuevoLibro: LibroGussi = {
-      id: Date.now().toString(),
-      titulo: formLibro.titulo,
-      precioPublico,
-      precioGussi,
-      fecha: formLibro.fecha,
-      mes: fecha.getMonth() + 1,
-      año: fecha.getFullYear()
-    }
+    try {
+      const { data, error } = await supabase
+        .from('libros_gussi')
+        .insert({
+          titulo: formLibro.titulo,
+          precio_publico: precioPublico,
+          precio_gussi: precioGussi,
+          fecha: formLibro.fecha,
+          mes: fecha.getMonth() + 1,
+          año: fecha.getFullYear()
+        })
+        .select()
 
-    setLibros([...libros, nuevoLibro])
-    setFormLibro({
-      titulo: '',
-      precioPublico: '',
-      fecha: format(new Date(), 'yyyy-MM-dd')
-    })
+      if (error) throw error
+
+      setLibros([...libros, ...(data || [])])
+      setFormLibro({
+        titulo: '',
+        precioPublico: '',
+        fecha: format(new Date(), 'yyyy-MM-dd')
+      })
+    } catch (error) {
+      console.error('Error agregando libro:', error)
+      alert('Error al agregar el libro')
+    }
   }
 
-  const eliminarLibro = (id: string) => {
-    setLibros(libros.filter(l => l.id !== id))
+  const eliminarLibro = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('libros_gussi')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+
+      setLibros(libros.filter(l => l.id !== id))
+    } catch (error) {
+      console.error('Error eliminando libro:', error)
+      alert('Error al eliminar el libro')
+    }
   }
 
   const toggleMes = (mesKey: string) => {
@@ -90,9 +131,9 @@ export default function LibrosGussiPage() {
       }
     }
     acc[key].libros.push(libro)
-    acc[key].totalPublico += libro.precioPublico
-    acc[key].totalGussi += libro.precioGussi
-    acc[key].descuentoTotal += libro.precioPublico - libro.precioGussi
+    acc[key].totalPublico += libro.precio_publico
+    acc[key].totalGussi += libro.precio_gussi
+    acc[key].descuentoTotal += libro.precio_publico - libro.precio_gussi
     return acc
   }, {} as Record<string, any>)
 
@@ -101,8 +142,8 @@ export default function LibrosGussiPage() {
     return b.mes - a.mes
   })
 
-  const totalGeneral = libros.reduce((sum, l) => sum + l.precioPublico, 0)
-  const totalGussiGeneral = libros.reduce((sum, l) => sum + l.precioGussi, 0)
+  const totalGeneral = libros.reduce((sum, l) => sum + l.precio_publico, 0)
+  const totalGussiGeneral = libros.reduce((sum, l) => sum + l.precio_gussi, 0)
   const descuentoGeneral = totalGeneral - totalGussiGeneral
 
   const meses = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
@@ -288,13 +329,13 @@ export default function LibrosGussiPage() {
                                 {format(new Date(libro.fecha), 'dd/MM/yyyy')}
                               </td>
                               <td className="px-4 py-3 text-right text-slate-600">
-                                ${libro.precioPublico.toLocaleString('es-UY', { minimumFractionDigits: 2 })}
+                                ${libro.precio_publico.toLocaleString('es-UY', { minimumFractionDigits: 2 })}
                               </td>
                               <td className="px-4 py-3 text-right text-green-700 font-semibold">
-                                ${(libro.precioPublico - libro.precioGussi).toLocaleString('es-UY', { minimumFractionDigits: 2 })}
+                                ${(libro.precio_publico - libro.precio_gussi).toLocaleString('es-UY', { minimumFractionDigits: 2 })}
                               </td>
                               <td className="px-4 py-3 text-right font-bold bg-blue-50 text-blue-700">
-                                ${libro.precioGussi.toLocaleString('es-UY', { minimumFractionDigits: 2 })}
+                                ${libro.precio_gussi.toLocaleString('es-UY', { minimumFractionDigits: 2 })}
                               </td>
                               <td className="px-4 py-3 text-center">
                                 <button

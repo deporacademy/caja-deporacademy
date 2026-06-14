@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { ArrowDownCircle, ArrowUpCircle, Clock, CheckCircle, RefreshCw } from 'lucide-react'
+import { ArrowDownCircle, ArrowUpCircle, Clock, CheckCircle, RefreshCw, Trash2, RotateCcw } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -15,24 +15,30 @@ type MovimientoPendiente = {
   estado: string
   comprador_email: string | null
   clasificado: boolean
+  descartado?: boolean
 }
+
+type Tab = 'pendientes' | 'descartados'
 
 export default function RevisarMovimientosPage() {
   const [movimientos, setMovimientos] = useState<MovimientoPendiente[]>([])
   const [loading, setLoading] = useState(true)
   const [clasificando, setClasificando] = useState<string | null>(null)
   const [syncing, setSyncing] = useState(false)
+  const [tab, setTab] = useState<Tab>('pendientes')
 
   useEffect(() => {
     cargarMovimientos()
-  }, [])
+  }, [tab])
 
   const cargarMovimientos = async () => {
     try {
+      setLoading(true)
       const { data, error } = await supabase
         .from('movimientos_pendientes')
         .select('*')
         .eq('clasificado', false)
+        .eq('descartado', tab === 'descartados')
         .order('fecha', { ascending: false })
 
       if (error) throw error
@@ -60,6 +66,42 @@ export default function RevisarMovimientosPage() {
       alert('Error al sincronizar con MercadoPago')
     } finally {
       setSyncing(false)
+    }
+  }
+
+  const descartarMovimiento = async (movimientoId: string) => {
+    setClasificando(movimientoId)
+    try {
+      const { error } = await supabase
+        .from('movimientos_pendientes')
+        .update({ descartado: true })
+        .eq('id', movimientoId)
+
+      if (error) throw error
+      setMovimientos(prev => prev.filter(m => m.id !== movimientoId))
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Error al descartar el movimiento')
+    } finally {
+      setClasificando(null)
+    }
+  }
+
+  const restaurarMovimiento = async (movimientoId: string) => {
+    setClasificando(movimientoId)
+    try {
+      const { error } = await supabase
+        .from('movimientos_pendientes')
+        .update({ descartado: false })
+        .eq('id', movimientoId)
+
+      if (error) throw error
+      setMovimientos(prev => prev.filter(m => m.id !== movimientoId))
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Error al restaurar el movimiento')
+    } finally {
+      setClasificando(null)
     }
   }
 
@@ -114,12 +156,40 @@ export default function RevisarMovimientosPage() {
         </button>
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-4 border-b border-gray-200">
+        <button
+          onClick={() => setTab('pendientes')}
+          className={`px-4 py-3 font-medium transition-colors ${
+            tab === 'pendientes'
+              ? 'text-primary-600 border-b-2 border-primary-600'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          Pendientes
+        </button>
+        <button
+          onClick={() => setTab('descartados')}
+          className={`px-4 py-3 font-medium transition-colors ${
+            tab === 'descartados'
+              ? 'text-primary-600 border-b-2 border-primary-600'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          Descartados
+        </button>
+      </div>
+
       {/* Stats */}
       <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
         <div className="flex items-center gap-2">
           <Clock className="w-5 h-5 text-primary-600" />
           <span className="font-medium text-primary-900">
-            {movimientos.length} movimiento{movimientos.length !== 1 ? 's' : ''} pendiente{movimientos.length !== 1 ? 's' : ''} de clasificar
+            {movimientos.length} movimiento{movimientos.length !== 1 ? 's' : ''} {
+              tab === 'pendientes' 
+                ? `pendiente${movimientos.length !== 1 ? 's' : ''} de clasificar`
+                : `descartado${movimientos.length !== 1 ? 's' : ''}`
+            }
           </span>
         </div>
       </div>
@@ -190,23 +260,45 @@ export default function RevisarMovimientosPage() {
 
                 {/* Botones de clasificación */}
                 <div className="flex flex-col gap-2 min-w-[140px]">
-                  <button
-                    onClick={() => clasificarMovimiento(movimiento.id, 'ingreso')}
-                    disabled={clasificando === movimiento.id}
-                    className="flex items-center justify-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <ArrowDownCircle className="w-4 h-4" />
-                    Ingreso
-                  </button>
+                  {tab === 'pendientes' ? (
+                    <>
+                      <button
+                        onClick={() => clasificarMovimiento(movimiento.id, 'ingreso')}
+                        disabled={clasificando === movimiento.id}
+                        className="flex items-center justify-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <ArrowDownCircle className="w-4 h-4" />
+                        Ingreso
+                      </button>
 
-                  <button
-                    onClick={() => clasificarMovimiento(movimiento.id, 'gasto')}
-                    disabled={clasificando === movimiento.id}
-                    className="flex items-center justify-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <ArrowUpCircle className="w-4 h-4" />
-                    Gasto
-                  </button>
+                      <button
+                        onClick={() => clasificarMovimiento(movimiento.id, 'gasto')}
+                        disabled={clasificando === movimiento.id}
+                        className="flex items-center justify-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <ArrowUpCircle className="w-4 h-4" />
+                        Gasto
+                      </button>
+
+                      <button
+                        onClick={() => descartarMovimiento(movimiento.id)}
+                        disabled={clasificando === movimiento.id}
+                        className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Descartar
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => restaurarMovimiento(movimiento.id)}
+                      disabled={clasificando === movimiento.id}
+                      className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      Restaurar
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

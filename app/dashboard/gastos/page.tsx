@@ -34,19 +34,15 @@ export default function GastosPage() {
 
   async function loadData() {
     try {
-      const { data: gastosData, error: gastosError } = await supabase
+      const { data: gastosData } = await supabase
         .from('gastos')
-        .select('*')
+        .select('*, categorias(id, nombre, color)')
         .order('fecha', { ascending: false })
 
-      if (gastosError) throw gastosError
-
-      const { data: categoriasData, error: categoriasError } = await supabase
+      const { data: categoriasData } = await supabase
         .from('categorias')
         .select('*')
         .order('nombre')
-
-      if (categoriasError) throw categoriasError
 
       setGastos(gastosData || [])
       setCategorias(categoriasData || [])
@@ -55,7 +51,6 @@ export default function GastosPage() {
       }
     } catch (error) {
       console.error('Error loading data:', error)
-      alert('Error al cargar los datos')
     } finally {
       setLoading(false)
     }

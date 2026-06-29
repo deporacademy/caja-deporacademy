@@ -34,17 +34,27 @@ export default function RevisarMovimientosPage() {
   const cargarMovimientos = async () => {
     try {
       setLoading(true)
-      const { data, error } = await supabase
+      let query = supabase
         .from('movimientos_pendientes')
         .select('*')
         .eq('clasificado', false)
-        .eq('descartado', tab === 'descartados')
-        .order('fecha', { ascending: false })
+
+      // Filtro por descartado basado en el tab
+      if (tab === 'pendientes') {
+        // Mostrar solo los NO descartados (false o NULL)
+        query = query.or('descartado.is.null,descartado.eq.false')
+      } else {
+        // Mostrar solo los descartados (true)
+        query = query.eq('descartado', true)
+      }
+
+      const { data, error } = await query.order('fecha', { ascending: false })
 
       if (error) throw error
       setMovimientos(data || [])
     } catch (error) {
       console.error('Error cargando movimientos:', error)
+      alert('Error al cargar movimientos')
     } finally {
       setLoading(false)
     }

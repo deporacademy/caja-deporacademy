@@ -46,7 +46,7 @@ export default function DashboardPage() {
 
       const { data: gastosData } = await supabase
         .from('gastos')
-        .select('*, categorias(nombre, color)')
+        .select('*')
         .gte('fecha', format(new Date(inicioAño), 'yyyy-MM-dd'))
         .lte('fecha', format(new Date(finAño), 'yyyy-MM-dd'))
         .order('fecha', { ascending: false })

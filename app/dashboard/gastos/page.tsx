@@ -173,7 +173,9 @@ export default function GastosPage() {
     const groupedByCategoria: { [key: string]: number } = {}
 
     gastosPorMoneda.forEach(gasto => {
-      const categoriaNombre = gasto.categorias?.nombre || 'Sin categoría'
+      // Buscar la categoría en el array de categorías
+      const categoria = categorias.find(c => c.id === gasto.categoria_id)
+      const categoriaNombre = categoria?.nombre || 'Sin categoría'
       groupedByCategoria[categoriaNombre] = (groupedByCategoria[categoriaNombre] || 0) + Number(gasto.monto)
     })
 
